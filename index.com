@@ -1,0 +1,2299 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bitcoin Decoded — Interactive Learning Experience</title>
+<!--
+=======================================================================
+  BITCOIN DECODED — Interactive Learning Environment
+  Built for: Fiat users, teachers, beginners, workshop delivery
+  Usage: Open in any browser. No server required. Works fully offline.
+  
+  INSTRUCTOR NOTES:
+  - Use the "👨‍🏫 Teacher Mode" toggle (top right) before presenting
+  - Teacher mode reveals talking prompts, questions, and analogy notes
+  - Each stage has a REPLAY button for revisiting during discussion
+  - Estimated timing per stage shown in teacher notes
+  - Full workshop = 60–90 minutes with discussion
+=======================================================================
+-->
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --surface: #12121a;
+    --card: #1a1a26;
+    --border: #2a2a3d;
+    --orange: #F7931A;
+    --orange-dim: rgba(247,147,26,0.15);
+    --orange-glow: rgba(247,147,26,0.35);
+    --gold: #FFD166;
+    --blue: #6EC6FF;
+    --green: #06D6A0;
+    --red: #EF4444;
+    --text: #E8E8F0;
+    --text-dim: #888899;
+    --text-faint: #44445a;
+    --radius: 14px;
+    --transition: 0.3s cubic-bezier(0.4,0,0.2,1);
+  }
+
+  * { margin:0; padding:0; box-sizing:border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ── TOPBAR ── */
+  #topbar {
+    position: fixed; top:0; left:0; right:0; z-index:100;
+    background: rgba(10,10,15,0.92);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+    padding: 0 24px;
+    height: 60px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  #topbar .logo {
+    font-size: 1.1rem; font-weight: 800; letter-spacing: -0.5px;
+    color: var(--orange);
+    display: flex; align-items: center; gap: 8px;
+  }
+  #topbar .logo span { color: var(--text); }
+  #progress-bar-wrap {
+    flex: 1; max-width: 300px; margin: 0 24px;
+  }
+  #progress-track {
+    height: 4px; background: var(--border); border-radius: 99px; overflow: hidden;
+  }
+  #progress-fill {
+    height: 100%; background: linear-gradient(90deg, var(--orange), var(--gold));
+    border-radius: 99px; transition: width 0.5s ease;
+    width: 11%;
+  }
+  #progress-label { font-size: 0.7rem; color: var(--text-dim); margin-top: 4px; text-align:center; }
+  .top-btns { display: flex; gap: 10px; align-items: center; }
+  .btn-teacher {
+    background: var(--card); border: 1px solid var(--border);
+    color: var(--text-dim); padding: 6px 14px; border-radius: 8px;
+    cursor: pointer; font-size: 0.8rem; transition: var(--transition);
+    white-space: nowrap;
+  }
+  .btn-teacher:hover, .btn-teacher.active {
+    background: var(--orange-dim); border-color: var(--orange);
+    color: var(--orange);
+  }
+  #stage-nav-dots {
+    display: flex; gap: 6px; align-items: center;
+  }
+  .nav-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--border); transition: var(--transition); cursor: pointer;
+  }
+  .nav-dot.done { background: var(--orange); }
+  .nav-dot.active { background: var(--gold); transform: scale(1.4); }
+
+  /* ── MAIN AREA ── */
+  #main { padding-top: 60px; min-height: 100vh; }
+
+  /* ── STAGES ── */
+  .stage {
+    display: none; min-height: calc(100vh - 60px);
+    padding: 40px 24px 100px;
+    max-width: 860px; margin: 0 auto;
+    animation: fadeIn 0.5s ease;
+  }
+  .stage.active { display: block; }
+  @keyframes fadeIn { from { opacity:0; transform: translateY(18px); } to { opacity:1; transform: none; } }
+
+  /* ── STAGE HEADER ── */
+  .stage-header {
+    margin-bottom: 32px;
+  }
+  .stage-tag {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: var(--orange-dim); border: 1px solid var(--orange);
+    color: var(--orange); padding: 4px 12px; border-radius: 99px;
+    font-size: 0.75rem; font-weight: 700; letter-spacing: 1px;
+    text-transform: uppercase; margin-bottom: 14px;
+  }
+  .stage-title {
+    font-size: clamp(1.8rem, 5vw, 2.6rem);
+    font-weight: 900; line-height: 1.1;
+    letter-spacing: -1px; margin-bottom: 12px;
+  }
+  .stage-title em { color: var(--orange); font-style: normal; }
+  .stage-subtitle {
+    color: var(--text-dim); font-size: 1rem; line-height: 1.6;
+    max-width: 560px;
+  }
+
+  /* ── CARDS ── */
+  .card {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 24px;
+    margin-bottom: 20px;
+  }
+  .card-title {
+    font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1.5px;
+    color: var(--text-dim); margin-bottom: 14px; font-weight: 700;
+  }
+
+  /* ── TEACHER PANEL ── */
+  .teacher-panel {
+    display: none;
+    background: linear-gradient(135deg, #1a1a26, #1a261a);
+    border: 1px solid #2a3d2a;
+    border-radius: var(--radius);
+    padding: 20px 24px; margin-bottom: 24px;
+    border-left: 4px solid var(--green);
+  }
+  .teacher-panel.visible { display: block; }
+  .teacher-label {
+    font-size: 0.7rem; text-transform: uppercase; letter-spacing: 2px;
+    color: var(--green); font-weight: 800; margin-bottom: 12px;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .teacher-section { margin-bottom: 14px; }
+  .teacher-section h4 { font-size: 0.8rem; color: var(--gold); margin-bottom: 6px; }
+  .teacher-section p, .teacher-section ul { font-size: 0.85rem; color: #aaddaa; line-height: 1.6; }
+  .teacher-section ul { padding-left: 18px; }
+  .teacher-section ul li { margin-bottom: 4px; }
+  .time-badge {
+    display: inline-block; background: rgba(6,214,160,0.15);
+    border: 1px solid var(--green); color: var(--green);
+    padding: 2px 10px; border-radius: 99px; font-size: 0.75rem;
+    font-weight: 700; margin-bottom: 12px;
+  }
+
+  /* ── REVEAL BOX ── */
+  .reveal-box {
+    background: var(--orange-dim); border: 1px solid var(--orange);
+    border-radius: var(--radius); padding: 20px 24px;
+    margin-top: 24px; display: none;
+  }
+  .reveal-box.visible { display: block; animation: fadeIn 0.4s ease; }
+  .reveal-box .reveal-label {
+    font-size: 0.7rem; text-transform: uppercase; letter-spacing: 2px;
+    color: var(--orange); font-weight: 800; margin-bottom: 8px;
+  }
+  .reveal-box p {
+    font-size: 1.05rem; line-height: 1.6; color: var(--text);
+  }
+  .reveal-box strong { color: var(--orange); }
+
+  /* ── BUTTONS ── */
+  .btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 12px 24px; border-radius: 10px;
+    font-size: 0.95rem; font-weight: 700;
+    cursor: pointer; border: none; transition: var(--transition);
+    letter-spacing: 0.2px;
+  }
+  .btn-primary {
+    background: var(--orange);
+    color: #000;
+  }
+  .btn-primary:hover { background: var(--gold); transform: translateY(-1px); box-shadow: 0 8px 24px var(--orange-glow); }
+  .btn-secondary {
+    background: var(--card); border: 1px solid var(--border);
+    color: var(--text);
+  }
+  .btn-secondary:hover { border-color: var(--orange); color: var(--orange); }
+  .btn-sm { padding: 8px 16px; font-size: 0.8rem; }
+
+  /* ── NAVIGATION ── */
+  .stage-nav {
+    display: flex; gap: 12px; margin-top: 36px; flex-wrap: wrap;
+    align-items: center;
+  }
+
+  /* ── BARTER SIMULATION (Stage 1) ── */
+  .barter-grid {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 16px; margin-bottom: 20px;
+  }
+  .trader {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 12px; padding: 18px; text-align: center;
+  }
+  .trader h3 { font-size: 0.85rem; color: var(--text-dim); margin-bottom: 12px; text-transform: uppercase; letter-spacing: 1px; }
+  .trader-name { font-size: 1.1rem; font-weight: 800; margin-bottom: 8px; }
+  .goods-list { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
+  .good-chip {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 8px; padding: 6px 12px; font-size: 0.85rem;
+    cursor: pointer; transition: var(--transition);
+    display: flex; align-items: center; gap: 4px;
+  }
+  .good-chip:hover { border-color: var(--orange); color: var(--orange); }
+  .good-chip.selected { background: var(--orange-dim); border-color: var(--orange); color: var(--orange); }
+  #barter-result {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 12px; padding: 18px; text-align: center;
+    min-height: 80px; display: flex; align-items: center; justify-content: center;
+    font-size: 0.95rem; line-height: 1.6; color: var(--text-dim);
+    transition: var(--transition);
+  }
+  #barter-result.fail { border-color: var(--red); color: var(--red); background: rgba(239,68,68,0.1); }
+  #barter-result.success { border-color: var(--green); color: var(--green); background: rgba(6,214,160,0.1); }
+
+  /* ── LEDGER SIMULATION (Stage 2) ── */
+  .accounts-row {
+    display: grid; grid-template-columns: repeat(3, 1fr);
+    gap: 14px; margin-bottom: 20px;
+  }
+  .account-card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 12px; padding: 16px; text-align: center;
+  }
+  .account-card .emoji { font-size: 1.8rem; margin-bottom: 6px; }
+  .account-card h4 { font-size: 0.85rem; color: var(--text-dim); margin-bottom: 4px; }
+  .account-balance {
+    font-size: 1.4rem; font-weight: 900; color: var(--gold);
+  }
+  .account-balance.frozen { color: var(--red); }
+  .send-controls {
+    display: flex; gap: 10px; align-items: center; flex-wrap: wrap;
+    margin-bottom: 14px;
+  }
+  .send-controls select, .send-controls input {
+    background: var(--surface); border: 1px solid var(--border);
+    color: var(--text); padding: 10px 14px; border-radius: 8px;
+    font-size: 0.9rem; flex: 1; min-width: 100px;
+  }
+  .ledger-log {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 10px; padding: 14px; max-height: 130px; overflow-y: auto;
+    font-family: monospace; font-size: 0.8rem; color: var(--text-dim);
+  }
+  .ledger-log .log-entry { padding: 3px 0; border-bottom: 1px solid var(--border); }
+  .log-ok { color: var(--green); }
+  .log-fail { color: var(--red); }
+  .problem-btn-row { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 12px; }
+  .problem-btn {
+    background: rgba(239,68,68,0.1); border: 1px solid var(--red);
+    color: var(--red); padding: 8px 16px; border-radius: 8px;
+    cursor: pointer; font-size: 0.8rem; font-weight: 700;
+    transition: var(--transition);
+  }
+  .problem-btn:hover { background: rgba(239,68,68,0.2); }
+
+  /* ── DOUBLE SPEND (Stage 3) ── */
+  #doublespend-area {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 24px;
+  }
+  .ticket-visual {
+    display: flex; gap: 14px; flex-wrap: wrap; margin: 16px 0;
+  }
+  .ticket {
+    background: linear-gradient(135deg, #1a1a3a, #2a1a3a);
+    border: 2px solid #6366f1; border-radius: 10px;
+    padding: 16px 20px; min-width: 140px; text-align: center;
+    font-size: 0.85rem; position: relative; transition: var(--transition);
+  }
+  .ticket .ticket-id { font-size: 0.65rem; color: #888; margin-top: 4px; font-family: monospace; }
+  .ticket.used { border-color: var(--red); opacity: 0.5; }
+  .ticket.used::after {
+    content: '✗ USED'; position: absolute; top: 50%; left: 50%;
+    transform: translate(-50%,-50%) rotate(-15deg);
+    color: var(--red); font-size: 1rem; font-weight: 900;
+  }
+  .ticket.copy { border-color: var(--gold); }
+  #copy-count { font-size: 1.5rem; font-weight: 900; color: var(--red); }
+
+  /* ── DISTRIBUTED LEDGER (Stage 4) ── */
+  .witness-grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 12px; margin: 16px 0;
+  }
+  .witness-node {
+    background: var(--surface); border: 2px solid var(--border);
+    border-radius: 12px; padding: 14px; text-align: center;
+    transition: var(--transition); position: relative; overflow: hidden;
+  }
+  .witness-node .node-emoji { font-size: 1.6rem; margin-bottom: 6px; }
+  .witness-node .node-name { font-size: 0.75rem; color: var(--text-dim); }
+  .witness-node .node-status {
+    font-size: 0.7rem; font-weight: 700; margin-top: 6px;
+    color: var(--text-faint);
+  }
+  .witness-node.checking { border-color: var(--gold); }
+  .witness-node.checking .node-status { color: var(--gold); }
+  .witness-node.approved { border-color: var(--green); background: rgba(6,214,160,0.07); }
+  .witness-node.approved .node-status { color: var(--green); }
+  .witness-node.rejected { border-color: var(--red); }
+  .witness-node.rejected .node-status { color: var(--red); }
+  #tx-display {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 10px; padding: 16px; margin-bottom: 16px;
+    font-family: monospace; font-size: 0.85rem;
+  }
+  #consensus-meter {
+    height: 8px; background: var(--border); border-radius: 99px;
+    overflow: hidden; margin-top: 12px;
+  }
+  #consensus-fill {
+    height: 100%; width: 0%; border-radius: 99px;
+    background: linear-gradient(90deg, var(--orange), var(--green));
+    transition: width 0.4s ease;
+  }
+
+  /* ── MINING GAME (Stage 5) ── */
+  .mining-arena {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 16px; margin: 16px 0;
+  }
+  @media (max-width: 600px) { .mining-arena { grid-template-columns: 1fr; } }
+  .miner-card {
+    background: var(--surface); border: 2px solid var(--border);
+    border-radius: 12px; padding: 18px; text-align: center;
+    transition: var(--transition);
+  }
+  .miner-card.winner { border-color: var(--gold); background: rgba(255,209,102,0.07); }
+  .miner-card.loser { opacity: 0.5; }
+  .miner-emoji { font-size: 2.2rem; }
+  .miner-name { font-size: 0.9rem; font-weight: 700; margin: 6px 0; }
+  .miner-progress {
+    height: 6px; background: var(--border); border-radius: 99px;
+    overflow: hidden; margin: 10px 0;
+  }
+  .miner-bar {
+    height: 100%; width: 0%; background: var(--orange);
+    border-radius: 99px; transition: width 0.1s linear;
+  }
+  .miner-bar.fast { background: var(--gold); }
+  .miner-bar.medium { background: var(--orange); }
+  .miner-bar.slow { background: var(--blue); }
+  #puzzle-display {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 10px; padding: 16px; margin-bottom: 16px;
+    text-align: center;
+  }
+  #puzzle-question {
+    font-size: 1.6rem; font-weight: 900; color: var(--orange); margin-bottom: 10px;
+  }
+  #puzzle-input {
+    background: var(--surface); border: 1px solid var(--border);
+    color: var(--text); padding: 10px 16px; border-radius: 8px;
+    font-size: 1rem; text-align: center; width: 160px;
+  }
+  #mining-result {
+    text-align: center; padding: 16px;
+    font-size: 1rem; font-weight: 700;
+    display: none;
+  }
+  #mining-result.win { color: var(--gold); display: block; }
+  #mining-result.lose { color: var(--red); display: block; }
+
+  /* ── BLOCKCHAIN (Stage 6) ── */
+  .chain-container {
+    display: flex; gap: 0; align-items: center;
+    overflow-x: auto; padding: 10px 0; margin: 16px 0;
+    flex-wrap: nowrap;
+  }
+  .block-item {
+    flex-shrink: 0; background: var(--surface);
+    border: 2px solid var(--border);
+    border-radius: 10px; padding: 14px; width: 130px; text-align: center;
+    transition: var(--transition); cursor: pointer; position: relative;
+  }
+  .block-item.tampered { border-color: var(--red); background: rgba(239,68,68,0.08); }
+  .block-item.broken { border-color: var(--red); animation: shake 0.3s ease; }
+  @keyframes shake {
+    0%,100%{transform:translateX(0)} 25%{transform:translateX(-4px)} 75%{transform:translateX(4px)}
+  }
+  .block-item:hover:not(.genesis) { border-color: var(--orange); }
+  .block-num { font-size: 0.7rem; color: var(--text-dim); text-transform: uppercase; letter-spacing: 1px; }
+  .block-hash { font-family: monospace; font-size: 0.62rem; color: var(--text-dim); margin: 6px 0; word-break: break-all; }
+  .block-data { font-size: 0.8rem; font-weight: 700; color: var(--text); }
+  .chain-link {
+    flex-shrink: 0; color: var(--border); font-size: 1.2rem;
+    padding: 0 4px; transition: var(--transition);
+  }
+  .chain-link.broken { color: var(--red); }
+  #tamper-msg {
+    color: var(--red); font-size: 0.9rem; text-align: center;
+    display: none; margin-top: 10px; font-weight: 700;
+  }
+
+  /* ── KEYS (Stage 7) ── */
+  .key-visual {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 16px; margin: 16px 0;
+  }
+  @media (max-width: 560px) { .key-visual { grid-template-columns: 1fr; } }
+  .key-card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 12px; padding: 18px; text-align: center;
+  }
+  .key-card.public-key { border-color: var(--blue); }
+  .key-card.private-key { border-color: var(--orange); }
+  .key-icon { font-size: 2rem; margin-bottom: 8px; }
+  .key-label { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; }
+  .key-card.public-key .key-label { color: var(--blue); }
+  .key-card.private-key .key-label { color: var(--orange); }
+  .key-value {
+    font-family: monospace; font-size: 0.7rem;
+    color: var(--text-dim); word-break: break-all; line-height: 1.5;
+    background: var(--card); padding: 8px; border-radius: 6px;
+    margin-top: 8px;
+  }
+  .key-desc { font-size: 0.8rem; color: var(--text-dim); margin-top: 8px; line-height: 1.5; }
+  #key-status {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 10px; padding: 16px; text-align: center;
+    margin-top: 16px; font-size: 0.95rem; min-height: 70px;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--text-dim); transition: var(--transition);
+  }
+  #key-status.danger { border-color: var(--red); color: var(--red); background: rgba(239,68,68,0.08); }
+  #key-status.safe { border-color: var(--green); color: var(--green); background: rgba(6,214,160,0.08); }
+
+  /* ── SCARCITY (Stage 8) ── */
+  .halving-timeline {
+    display: flex; gap: 0; flex-wrap: nowrap;
+    overflow-x: auto; margin: 16px 0; padding-bottom: 10px;
+  }
+  .halving-event {
+    flex-shrink: 0; text-align: center; padding: 12px 16px;
+    border-right: 1px solid var(--border); min-width: 110px;
+    transition: var(--transition);
+  }
+  .halving-event:last-child { border-right: none; }
+  .halving-event.active { background: var(--orange-dim); }
+  .halving-year { font-size: 0.7rem; color: var(--text-dim); }
+  .halving-reward {
+    font-size: 1.2rem; font-weight: 900; margin: 4px 0;
+  }
+  .halving-label { font-size: 0.65rem; color: var(--text-dim); }
+  .supply-visual {
+    height: 50px; background: var(--border); border-radius: 10px;
+    overflow: hidden; position: relative; margin: 16px 0;
+  }
+  #supply-bar {
+    height: 100%; width: 0%;
+    background: linear-gradient(90deg, var(--orange), var(--gold));
+    border-radius: 10px; transition: width 1s ease;
+    display: flex; align-items: center; justify-content: flex-end;
+    padding-right: 12px;
+  }
+  #supply-count {
+    font-size: 1.3rem; font-weight: 900; color: var(--bg);
+    white-space: nowrap;
+  }
+  .supply-label-row {
+    display: flex; justify-content: space-between;
+    font-size: 0.7rem; color: var(--text-dim); margin-top: 6px;
+  }
+
+  /* ── FINAL COMPARISON (Stage 9) ── */
+  .comparison-table {
+    width: 100%; border-collapse: collapse; margin: 16px 0;
+  }
+  .comparison-table th {
+    padding: 12px 16px; text-align: center; font-size: 0.8rem;
+    text-transform: uppercase; letter-spacing: 1px;
+  }
+  .comparison-table th:first-child { text-align: left; }
+  .comparison-table th.fiat-head { color: var(--text-dim); }
+  .comparison-table th.btc-head { color: var(--orange); }
+  .comparison-table td {
+    padding: 12px 16px; border-top: 1px solid var(--border);
+    font-size: 0.9rem;
+  }
+  .comparison-table td:first-child { color: var(--text-dim); font-size: 0.8rem; }
+  .comparison-table td.fiat-cell { text-align: center; color: var(--text-dim); }
+  .comparison-table td.btc-cell { text-align: center; color: var(--orange); font-weight: 700; }
+  .scenario-btn-row { display: flex; gap: 10px; flex-wrap: wrap; margin: 16px 0; }
+  .scenario-btn {
+    background: var(--card); border: 1px solid var(--border);
+    color: var(--text-dim); padding: 10px 18px; border-radius: 8px;
+    cursor: pointer; font-size: 0.85rem; transition: var(--transition);
+  }
+  .scenario-btn:hover, .scenario-btn.active {
+    background: var(--orange-dim); border-color: var(--orange);
+    color: var(--orange);
+  }
+  #scenario-result {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 12px; padding: 20px; min-height: 80px;
+    display: flex; gap: 20px; flex-wrap: wrap;
+    margin-top: 16px; transition: var(--transition);
+  }
+  .scenario-side {
+    flex: 1; min-width: 180px;
+  }
+  .scenario-side h4 { font-size: 0.8rem; text-transform: uppercase;
+    letter-spacing: 1px; margin-bottom: 8px; }
+  .scenario-side.fiat-side h4 { color: var(--text-dim); }
+  .scenario-side.btc-side h4 { color: var(--orange); }
+  .scenario-side p { font-size: 0.9rem; line-height: 1.6; }
+  .fiat-side p { color: var(--red); }
+  .btc-side p { color: var(--green); }
+
+  /* ── COMPLETION SCREEN ── */
+  #completion-screen {
+    display: none; min-height: calc(100vh - 60px);
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    text-align: center; padding: 40px 24px;
+  }
+  #completion-screen.visible { display: flex; }
+  .completion-emoji { font-size: 5rem; margin-bottom: 20px;
+    animation: pulse 2s ease infinite; }
+  @keyframes pulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.08)} }
+  .completion-title {
+    font-size: clamp(2rem, 6vw, 3.5rem);
+    font-weight: 900; letter-spacing: -1.5px;
+    margin-bottom: 16px; line-height: 1.1;
+  }
+  .completion-title em { color: var(--orange); font-style: normal; }
+  .completion-sub {
+    color: var(--text-dim); font-size: 1rem; max-width: 500px;
+    line-height: 1.7; margin-bottom: 32px;
+  }
+  .cert-card {
+    background: var(--card); border: 2px solid var(--orange);
+    border-radius: 20px; padding: 32px 40px;
+    max-width: 500px; width: 100%; margin-bottom: 28px;
+    position: relative; overflow: hidden;
+  }
+  .cert-card::before {
+    content: ''; position: absolute; inset: 0;
+    background: radial-gradient(ellipse at center, var(--orange-dim), transparent 70%);
+    pointer-events: none;
+  }
+  .cert-title { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 3px;
+    color: var(--text-dim); margin-bottom: 10px; }
+  .cert-name { font-size: 1.5rem; font-weight: 900; color: var(--gold); }
+  .cert-desc { font-size: 0.85rem; color: var(--text-dim); margin-top: 8px; }
+  .cert-sig { margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--border);
+    font-size: 0.75rem; color: var(--text-faint); }
+
+  /* ── INTRO SCREEN ── */
+  #intro-screen {
+    min-height: 100vh; display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    text-align: center; padding: 40px 24px;
+  }
+  #intro-screen.hidden { display: none; }
+  .intro-badge {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: var(--orange-dim); border: 1px solid var(--orange);
+    color: var(--orange); padding: 6px 18px; border-radius: 99px;
+    font-size: 0.8rem; font-weight: 700; letter-spacing: 1px;
+    text-transform: uppercase; margin-bottom: 24px;
+  }
+  .intro-title {
+    font-size: clamp(2.5rem, 8vw, 5rem);
+    font-weight: 900; letter-spacing: -2px; line-height: 1.0;
+    margin-bottom: 20px;
+  }
+  .intro-title .btc { color: var(--orange); }
+  .intro-title .decoded { color: var(--text); }
+  .intro-desc {
+    color: var(--text-dim); font-size: 1.05rem;
+    max-width: 520px; line-height: 1.7; margin-bottom: 32px;
+  }
+  .journey-list {
+    display: flex; flex-direction: column; gap: 10px;
+    max-width: 360px; width: 100%; margin-bottom: 36px; text-align: left;
+  }
+  .journey-item {
+    display: flex; align-items: center; gap: 12px;
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 10px; padding: 12px 16px;
+  }
+  .journey-icon { font-size: 1.1rem; }
+  .journey-text { font-size: 0.85rem; color: var(--text); }
+  .orbit-graphic {
+    position: absolute; top: 50%; left: 50%;
+    transform: translate(-50%,-50%);
+    width: 500px; height: 500px;
+    border: 1px solid var(--orange-dim); border-radius: 50%;
+    pointer-events: none; z-index: -1;
+    animation: spin 30s linear infinite;
+  }
+  .orbit-graphic::before {
+    content: '₿'; position: absolute; top: -16px; left: 50%;
+    transform: translateX(-50%);
+    font-size: 1.2rem; color: var(--orange);
+  }
+  @keyframes spin { to { transform: translate(-50%,-50%) rotate(360deg); } }
+
+  /* ── GLOW RING HERO ── */
+  .bitcoin-hero {
+    width: 120px; height: 120px; border-radius: 50%;
+    background: radial-gradient(circle, var(--orange-dim), transparent);
+    border: 3px solid var(--orange);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 3.5rem; margin: 0 auto 28px;
+    box-shadow: 0 0 60px var(--orange-glow);
+    animation: glow 3s ease infinite alternate;
+  }
+  @keyframes glow {
+    from { box-shadow: 0 0 30px var(--orange-glow); }
+    to { box-shadow: 0 0 80px var(--orange-glow); }
+  }
+
+  /* ── MISC ── */
+  .divider { height: 1px; background: var(--border); margin: 24px 0; }
+  .badge {
+    display: inline-flex; align-items: center; gap: 4px;
+    padding: 3px 10px; border-radius: 99px; font-size: 0.72rem; font-weight: 700;
+  }
+  .badge-green { background: rgba(6,214,160,0.15); color: var(--green); border: 1px solid var(--green); }
+  .badge-orange { background: var(--orange-dim); color: var(--orange); border: 1px solid var(--orange); }
+  .badge-red { background: rgba(239,68,68,0.15); color: var(--red); border: 1px solid var(--red); }
+
+  .info-box {
+    background: var(--surface); border-left: 3px solid var(--blue);
+    border-radius: 6px; padding: 14px 18px; margin: 14px 0;
+    font-size: 0.88rem; color: var(--text-dim); line-height: 1.6;
+  }
+  .info-box strong { color: var(--blue); }
+
+  @media (max-width: 500px) {
+    .accounts-row { grid-template-columns: 1fr; }
+    .key-visual { grid-template-columns: 1fr; }
+    .barter-grid { grid-template-columns: 1fr; }
+    #topbar .logo span { display: none; }
+    #stage-nav-dots { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ══ TOP BAR ══ -->
+<div id="topbar">
+  <div class="logo">₿ <span>Bitcoin Decoded</span></div>
+  <div id="progress-bar-wrap">
+    <div id="progress-track"><div id="progress-fill"></div></div>
+    <div id="progress-label">Stage 1 of 9</div>
+  </div>
+  <div class="top-btns">
+    <div id="stage-nav-dots"></div>
+    <button class="btn-teacher" id="teacher-btn" onclick="toggleTeacher()">👨‍🏫 Teacher Mode</button>
+  </div>
+</div>
+
+<!-- ══ INTRO SCREEN ══ -->
+<div id="intro-screen">
+  <div class="bitcoin-hero">₿</div>
+  <div class="intro-badge">🎓 Interactive Learning Experience</div>
+  <h1 class="intro-title">
+    <span class="btc">Bitcoin</span><br>
+    <span class="decoded">Decoded</span>
+  </h1>
+  <p class="intro-desc">
+    No technical knowledge required. In 9 interactive stages, you'll go from 
+    <em style="color:var(--text)">"Bitcoin sounds confusing"</em> to 
+    <em style="color:var(--orange)">"I finally get it."</em>
+  </p>
+  <div class="journey-list">
+    <div class="journey-item"><span class="journey-icon">🪙</span><span class="journey-text">What money actually is</span></div>
+    <div class="journey-item"><span class="journey-icon">🏦</span><span class="journey-text">Why we built banks — and their limits</span></div>
+    <div class="journey-item"><span class="journey-icon">🔗</span><span class="journey-text">How Bitcoin works without any bank</span></div>
+    <div class="journey-item"><span class="journey-icon">🔑</span><span class="journey-text">True digital ownership</span></div>
+    <div class="journey-item"><span class="journey-icon">💎</span><span class="journey-text">Why Bitcoin is scarce — by design</span></div>
+  </div>
+  <button class="btn btn-primary" onclick="startJourney()" style="font-size:1.05rem; padding: 14px 36px;">
+    Begin the Journey →
+  </button>
+  <p style="font-size:0.75rem; color:var(--text-faint); margin-top:16px;">
+    Estimated time: 60–90 minutes with discussion
+  </p>
+</div>
+
+<!-- ══ MAIN STAGES ══ -->
+<div id="main" style="display:none">
+
+  <!-- ══════════════════════════════════════════════════════
+       STAGE 1 — WHAT IS MONEY?
+  ══════════════════════════════════════════════════════ -->
+  <div class="stage active" id="stage-1">
+
+    <div id="teacher-notes-1" class="teacher-panel">
+      <div class="teacher-label">👨‍🏫 Teacher Notes</div>
+      <div class="time-badge">⏱ 8–10 minutes</div>
+      <div class="teacher-section">
+        <h4>📢 Opening Script</h4>
+        <p>"Before Bitcoin makes sense, we need to ask: what even IS money? It's not as obvious as it sounds. It's not gold. It's not coins. It's actually... an agreement."</p>
+      </div>
+      <div class="teacher-section">
+        <h4>🎯 Core Analogy</h4>
+        <p>Use the barter village simulation. Show how trading goods directly is inefficient — what if I have bread but you want fish, and the fish seller only wants tools? This is the "double coincidence of wants" problem.</p>
+      </div>
+      <div class="teacher-section">
+        <h4>❓ Discussion Questions</h4>
+        <ul>
+          <li>"Why do we all accept £10 notes? What makes them valuable?"</li>
+          <li>"If nobody accepted pounds, would they be worth anything?"</li>
+          <li>"What gives money its value — the paper, or the agreement?"</li>
+        </ul>
+      </div>
+      <div class="teacher-section">
+        <h4>💡 Key Takeaway to Emphasise</h4>
+        <p>Money is a <strong style="color:var(--gold)">shared fiction</strong> that everyone agrees is valuable. The paper itself is worthless. Bitcoin is a new kind of agreement — just digital.</p>
+      </div>
+    </div>
+
+    <div class="stage-header">
+      <div class="stage-tag">Stage 1 · Foundation</div>
+      <h1 class="stage-title">What is <em>Money</em>, really?</h1>
+      <p class="stage-subtitle">Before understanding Bitcoin, we need to understand what money actually is. It's not what most people think.</p>
+    </div>
+
+    <div class="card">
+      <div class="card-title">🏘️ The Barter Village — Try to Trade</div>
+      <p style="font-size:0.85rem; color:var(--text-dim); margin-bottom:16px;">
+        Imagine a village where people swap goods directly. Click one good from each trader below to attempt a trade.
+      </p>
+      <div class="barter-grid">
+        <div class="trader">
+          <div class="trader-name">🧑‍🌾 Alice the Farmer</div>
+          <h3>She has:</h3>
+          <div class="goods-list">
+            <div class="good-chip" onclick="selectGood(this, 'alice', 'Wheat 🌾')">Wheat 🌾</div>
+            <div class="good-chip" onclick="selectGood(this, 'alice', 'Eggs 🥚')">Eggs 🥚</div>
+            <div class="good-chip" onclick="selectGood(this, 'alice', 'Milk 🥛')">Milk 🥛</div>
+          </div>
+          <div style="margin-top:12px; font-size:0.8rem; color:var(--text-dim)">She <strong style="color:var(--text)">wants:</strong> Tools 🔧</div>
+        </div>
+        <div class="trader">
+          <div class="trader-name">👷 Bob the Builder</div>
+          <h3>He has:</h3>
+          <div class="goods-list">
+            <div class="good-chip" onclick="selectGood(this, 'bob', 'Tools 🔧')">Tools 🔧</div>
+            <div class="good-chip" onclick="selectGood(this, 'bob', 'Wood 🪵')">Wood 🪵</div>
+            <div class="good-chip" onclick="selectGood(this, 'bob', 'Nails 🔩')">Nails 🔩</div>
+          </div>
+          <div style="margin-top:12px; font-size:0.8rem; color:var(--text-dim)">He <strong style="color:var(--text)">wants:</strong> Fish 🐟</div>
+        </div>
+      </div>
+      <div id="barter-result">Click one item from each trader above to attempt a trade.</div>
+      <div style="margin-top:12px; font-size:0.8rem; color:var(--text-faint); text-align:center;">
+        Notice the problem? Alice has what Bob could use, but Bob doesn't want what Alice has.
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">💡 Why Barter Breaks Down</div>
+      <p style="font-size:0.9rem; line-height:1.7; color:var(--text-dim)">
+        In a village of 100 traders, you'd need <strong style="color:var(--text)">4,950 different exchange rates</strong> 
+        (one for every pair of goods). Carrying your goods everywhere is impractical. And what if your goods spoil?<br><br>
+        People invented money to solve this. Instead of swapping goods directly, everyone agrees to accept a 
+        <strong style="color:var(--orange)">common token</strong> — whether seashells, gold coins, or paper notes.
+      </p>
+    </div>
+
+    <div class="reveal-box" id="reveal-1">
+      <div class="reveal-label">💡 The Big Idea</div>
+      <p>
+        <strong>Money is not valuable because of what it's made of.</strong> A £10 note is worth £10 because 
+        everyone in the UK agrees it is. Remove that agreement and it's just paper. 
+        Money is a <strong>shared social technology</strong> — a tool for coordinating trust between strangers.
+        <br><br>
+        👉 <strong>Bitcoin is simply a new form of this agreement</strong> — one that works without any government or bank needing to maintain it.
+      </p>
+    </div>
+
+    <div class="stage-nav">
+      <button class="btn btn-secondary btn-sm" onclick="showReveal('reveal-1')">💡 Reveal Insight</button>
+      <button class="btn btn-primary" onclick="nextStage(2)">Next: Banks & Trust →</button>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════
+       STAGE 2 — BANKS & FIAT
+  ══════════════════════════════════════════════════════ -->
+  <div class="stage" id="stage-2">
+
+    <div id="teacher-notes-2" class="teacher-panel">
+      <div class="teacher-label">👨‍🏫 Teacher Notes</div>
+      <div class="time-badge">⏱ 10–12 minutes</div>
+      <div class="teacher-section">
+        <h4>📢 Opening Script</h4>
+        <p>"So money is an agreement. But who keeps track of who has what? In a small village, you'd trust a respected local to keep the ledger. That's essentially what banks are — trusted ledger keepers."</p>
+      </div>
+      <div class="teacher-section">
+        <h4>🎯 Core Analogy</h4>
+        <p>The village accountant with a big book. Everyone's balances are written in. When you "send" money, the accountant crosses out your number and adds to theirs. The paper notes themselves never move!</p>
+      </div>
+      <div class="teacher-section">
+        <h4>❓ Discussion Questions</h4>
+        <ul>
+          <li>"When you do a bank transfer, do any notes actually move?"</li>
+          <li>"What happens if the accountant decides to freeze your account?"</li>
+          <li>"Who controls how much money gets printed?"</li>
+        </ul>
+      </div>
+      <div class="teacher-section">
+        <h4>⚠️ Problems to Highlight</h4>
+        <p>Use the 3 problem buttons: <strong>Freeze Account</strong>, <strong>Inflation</strong>, <strong>Permission Denied</strong>. These are real scenarios that have happened to millions of people.</p>
+      </div>
+    </div>
+
+    <div class="stage-header">
+      <div class="stage-tag">Stage 2 · The System</div>
+      <h1 class="stage-title">Banks & <em>Fiat</em> Money</h1>
+      <p class="stage-subtitle">Money needs a record keeper. Enter the bank — a trusted ledger holder. But trust comes with strings attached.</p>
+    </div>
+
+    <div class="card">
+      <div class="card-title">📒 The Village Ledger — Send Money</div>
+      <div class="accounts-row" id="accounts-display">
+        <div class="account-card">
+          <div class="emoji">👩</div>
+          <h4>Alice</h4>
+          <div class="account-balance" id="bal-alice">£1,000</div>
+        </div>
+        <div class="account-card">
+          <div class="emoji">👦</div>
+          <h4>Bob</h4>
+          <div class="account-balance" id="bal-bob">£500</div>
+        </div>
+        <div class="account-card">
+          <div class="emoji">👵</div>
+          <h4>Carol</h4>
+          <div class="account-balance" id="bal-carol">£750</div>
+        </div>
+      </div>
+      <div class="send-controls">
+        <select id="send-from">
+          <option value="alice">Alice</option>
+          <option value="bob">Bob</option>
+          <option value="carol">Carol</option>
+        </select>
+        <span style="color:var(--text-dim); font-size:0.9rem;">→</span>
+        <select id="send-to">
+          <option value="bob">Bob</option>
+          <option value="alice">Alice</option>
+          <option value="carol">Carol</option>
+        </select>
+        <input type="number" id="send-amount" value="100" min="1" placeholder="Amount £" style="max-width:100px;">
+        <button class="btn btn-primary btn-sm" onclick="doTransfer()">Send ↗</button>
+      </div>
+      <div class="ledger-log" id="ledger-log">
+        <div class="log-entry" style="color:var(--text-faint)">— Bank ledger is ready. Try sending some money. —</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">⚠️ Problems with Centralised Trust</div>
+      <p style="font-size:0.85rem; color:var(--text-dim); margin-bottom:14px;">
+        The bank controls the ledger. That means the bank can do things you might not want...
+      </p>
+      <div class="problem-btn-row">
+        <button class="problem-btn" onclick="doFreeze()">🔒 Freeze Alice's Account</button>
+        <button class="problem-btn" onclick="doInflation()">📉 Inflation: New Money Printed</button>
+        <button class="problem-btn" onclick="doPermission()">🚫 Block Bob's Transfer</button>
+      </div>
+      <div id="problem-result" style="margin-top:12px; font-size:0.85rem; color:var(--red); display:none; padding:10px; background:rgba(239,68,68,0.07); border-radius:8px; border-left:3px solid var(--red);"></div>
+    </div>
+
+    <div class="reveal-box" id="reveal-2">
+      <div class="reveal-label">💡 The Big Idea</div>
+      <p>
+        Fiat money works on <strong>trust</strong>. You trust the bank to hold your money. You trust the government not to print too much. You trust no one will freeze your account.<br><br>
+        These are reasonable assumptions <em>most</em> of the time. But they fail millions of people every year — in banking crises, hyperinflation, war, or political censorship.<br><br>
+        👉 <strong>What if money could work without anyone needing to be trusted?</strong>
+      </p>
+    </div>
+
+    <div class="stage-nav">
+      <button class="btn btn-secondary btn-sm" onclick="showReveal('reveal-2')">💡 Reveal Insight</button>
+      <button class="btn btn-secondary btn-sm" onclick="resetLedger()">↺ Reset Ledger</button>
+      <button class="btn btn-primary" onclick="nextStage(3)">Next: The Double Spend Problem →</button>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════
+       STAGE 3 — DOUBLE SPEND
+  ══════════════════════════════════════════════════════ -->
+  <div class="stage" id="stage-3">
+
+    <div id="teacher-notes-3" class="teacher-panel">
+      <div class="teacher-label">👨‍🏫 Teacher Notes</div>
+      <div class="time-badge">⏱ 8 minutes</div>
+      <div class="teacher-section">
+        <h4>📢 Opening Script</h4>
+        <p>"OK so what if we just... get rid of the bank? Just use digital cash directly. The problem is: digital files can be copied. I can email you a photo and still have the photo. So how do you stop someone emailing their digital money to 100 people at once?"</p>
+      </div>
+      <div class="teacher-section">
+        <h4>🎯 Core Analogy</h4>
+        <p>Cinema ticket analogy. If you could photocopy your cinema ticket, everyone would. The cinema would go bankrupt. Digital cash has exactly this problem — without a bank keeping score, how do you prevent copying?</p>
+      </div>
+      <div class="teacher-section">
+        <h4>❓ Discussion Questions</h4>
+        <ul>
+          <li>"Why can't you just email someone a JPG of a £10 note?"</li>
+          <li>"Before Bitcoin, every attempt at digital cash needed a company in the middle. Why?"</li>
+          <li>"Can you think of how you'd solve the double-spend problem without a bank?"</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="stage-header">
+      <div class="stage-tag">Stage 3 · The Problem</div>
+      <h1 class="stage-title">The <em>Double Spend</em> Problem</h1>
+      <p class="stage-subtitle">If we remove the bank, how do we stop digital money being copied and spent twice? This is the problem that stumped engineers for 30 years.</p>
+    </div>
+
+    <div class="card">
+      <div class="card-title">🎟️ The Cinema Ticket Analogy — Try to Copy</div>
+      <div id="doublespend-area">
+        <p style="font-size:0.85rem; color:var(--text-dim); margin-bottom:16px;">
+          Imagine digital cash as a cinema ticket. You have one ticket worth £10. Watch what happens when you try to spend it more than once.
+        </p>
+        <div class="ticket-visual" id="ticket-container">
+          <div class="ticket" id="original-ticket">
+            🎟️ Digital £10
+            <div class="ticket-id">ID: 0x4f2a...9c1e</div>
+          </div>
+        </div>
+        <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:14px;">
+          <button class="btn btn-secondary btn-sm" onclick="spendTicket('merchant1')">💳 Pay Merchant 1</button>
+          <button class="btn btn-secondary btn-sm" onclick="spendTicket('merchant2')">💳 Pay Merchant 2</button>
+          <button class="btn btn-secondary btn-sm" onclick="spendTicket('merchant3')">💳 Pay Merchant 3</button>
+          <button class="btn btn-secondary btn-sm" onclick="resetTickets()">↺ Reset</button>
+        </div>
+        <div id="spend-status" style="margin-top:14px; font-size:0.9rem; color:var(--text-dim); text-align:center; min-height:30px;"></div>
+      </div>
+    </div>
+
+    <div class="info-box">
+      <strong>💡 The Key Insight:</strong> Before Bitcoin, every digital payment system needed a central server to check 
+      "has this money already been spent?" That's why PayPal, Visa, and banks all need a central computer keeping score. 
+      Without it, digital money is just infinitely copyable data.
+    </div>
+
+    <div class="reveal-box" id="reveal-3">
+      <div class="reveal-label">💡 The Big Idea</div>
+      <p>
+        The <strong>double-spend problem</strong> is why digital cash always required a trusted third party — until Bitcoin. 
+        Satoshi Nakamoto's breakthrough was finding a way to prevent double-spending without any central authority.<br><br>
+        The solution? Don't trust <em>one</em> record keeper. Trust <em>thousands</em> of them simultaneously.
+      </p>
+    </div>
+
+    <div class="stage-nav">
+      <button class="btn btn-secondary btn-sm" onclick="showReveal('reveal-3')">💡 Reveal Insight</button>
+      <button class="btn btn-primary" onclick="nextStage(4)">Next: Bitcoin's Solution →</button>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════
+       STAGE 4 — DISTRIBUTED LEDGER
+  ══════════════════════════════════════════════════════ -->
+  <div class="stage" id="stage-4">
+
+    <div id="teacher-notes-4" class="teacher-panel">
+      <div class="teacher-label">👨‍🏫 Teacher Notes</div>
+      <div class="time-badge">⏱ 10 minutes</div>
+      <div class="teacher-section">
+        <h4>📢 Opening Script</h4>
+        <p>"Bitcoin's genius idea: instead of one accountant keeping the ledger, imagine thousands of independent people worldwide, each with a copy. When you make a transaction, all of them check it and update their copies simultaneously."</p>
+      </div>
+      <div class="teacher-section">
+        <h4>🎯 Core Analogy</h4>
+        <p>Town square public notice board. Imagine standing up in a packed town square and announcing "I'm paying Maria £50." Everyone hears it. Everyone writes it down. Nobody can quietly change the record later.</p>
+      </div>
+      <div class="teacher-section">
+        <h4>❓ Discussion Questions</h4>
+        <ul>
+          <li>"If 10,000 people each hold a copy of the ledger, how many would someone need to hack?"</li>
+          <li>"Why would ordinary people run these nodes? (They're volunteers securing the network)"</li>
+          <li>"Could a government shut down Bitcoin? Could they shut down everyone?"</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="stage-header">
+      <div class="stage-tag">Stage 4 · The Solution</div>
+      <h1 class="stage-title">The Public <em>Notebook</em></h1>
+      <p class="stage-subtitle">What if thousands of independent witnesses all kept identical records simultaneously? No single person, bank, or government controls it.</p>
+    </div>
+
+    <div class="card">
+      <div class="card-title">🌍 Distributed Validation — Watch the Network Agree</div>
+      <div id="tx-display">
+        <div style="color:var(--text-dim); font-size:0.78rem; margin-bottom:6px;">PENDING TRANSACTION</div>
+        <div style="color:var(--gold)">Alice → Bob: 0.5 Bitcoin</div>
+        <div style="color:var(--text-faint); font-size:0.72rem; margin-top:4px;">Broadcasting to 12,450 independent nodes worldwide...</div>
+      </div>
+      <div class="witness-grid" id="witness-grid">
+        <!-- Populated by JS -->
+      </div>
+      <div style="margin-top:14px;">
+        <div style="display:flex; justify-content:space-between; font-size:0.75rem; color:var(--text-dim); margin-bottom:6px;">
+          <span>Consensus Progress</span>
+          <span id="consensus-pct">0%</span>
+        </div>
+        <div id="consensus-meter"><div id="consensus-fill"></div></div>
+      </div>
+      <div style="margin-top:14px; display:flex; gap:10px; flex-wrap:wrap;">
+        <button class="btn btn-primary btn-sm" onclick="runConsensus()">▶ Broadcast Transaction</button>
+        <button class="btn btn-secondary btn-sm" onclick="tryFraudTx()">🕵️ Try Fraudulent Transaction</button>
+        <button class="btn btn-secondary btn-sm" onclick="resetConsensus()">↺ Reset</button>
+      </div>
+      <div id="consensus-result" style="margin-top:12px; font-size:0.88rem; display:none; padding:10px; border-radius:8px;"></div>
+    </div>
+
+    <div class="reveal-box" id="reveal-4">
+      <div class="reveal-label">💡 The Big Idea</div>
+      <p>
+        Bitcoin's ledger (the <strong>blockchain</strong>) is held by over <strong>15,000 independent computers</strong> worldwide. 
+        To cheat the system, you'd need to rewrite history on more than half of them simultaneously — 
+        an essentially impossible task.<br><br>
+        👉 There's no "Bitcoin headquarters" to raid. No server to shut down. No CEO to arrest. 
+        <strong>The network IS the bank.</strong>
+      </p>
+    </div>
+
+    <div class="stage-nav">
+      <button class="btn btn-secondary btn-sm" onclick="showReveal('reveal-4')">💡 Reveal Insight</button>
+      <button class="btn btn-primary" onclick="nextStage(5)">Next: Mining →</button>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════
+       STAGE 5 — MINING
+  ══════════════════════════════════════════════════════ -->
+  <div class="stage" id="stage-5">
+
+    <div id="teacher-notes-5" class="teacher-panel">
+      <div class="teacher-label">👨‍🏫 Teacher Notes</div>
+      <div class="time-badge">⏱ 12 minutes</div>
+      <div class="teacher-section">
+        <h4>📢 Opening Script</h4>
+        <p>"OK so thousands of people hold copies of the ledger — but who gets to actually write new transactions? They can't all write at once! Bitcoin uses a competition. Whoever solves a puzzle first gets to write the next 'page' of the ledger and earns a Bitcoin reward."</p>
+      </div>
+      <div class="teacher-section">
+        <h4>🎯 Core Analogy</h4>
+        <p>A competitive accounting lottery. Imagine applying for the job of "next page writer." You have to win a competition. The winner writes the page, gets paid, and the process starts again. This is ~every 10 minutes on Bitcoin's network.</p>
+      </div>
+      <div class="teacher-section">
+        <h4>❓ Discussion Questions</h4>
+        <ul>
+          <li>"Why does Bitcoin use energy for mining? Isn't it wasteful?"</li>
+          <li>"If mining is expensive, why does anyone do it?" (Reward incentive)</li>
+          <li>"What stops a mining company taking over and cheating?"</li>
+        </ul>
+      </div>
+      <div class="teacher-section">
+        <h4>💡 Key Point on Energy</h4>
+        <p>The energy cost is the <em>security</em>. Making the competition expensive to enter means cheating is also expensive. It's the economic deterrent against fraud.</p>
+      </div>
+    </div>
+
+    <div class="stage-header">
+      <div class="stage-tag">Stage 5 · Security</div>
+      <h1 class="stage-title">Bitcoin <em>Mining</em></h1>
+      <p class="stage-subtitle">Who gets to write the next page of Bitcoin's ledger? A global competition runs every 10 minutes. Can you beat the computers?</p>
+    </div>
+
+    <div class="card">
+      <div class="card-title">⛏️ Be the Miner — Race to Solve the Puzzle</div>
+      <p style="font-size:0.85rem; color:var(--text-dim); margin-bottom:16px;">
+        In real Bitcoin, miners solve a complex mathematical puzzle. Here's a simplified version. 
+        Solve it faster than the competing miners!
+      </p>
+      <div id="puzzle-display">
+        <div style="font-size:0.78rem; color:var(--text-dim); margin-bottom:6px; text-transform:uppercase; letter-spacing:1px;">Current Puzzle</div>
+        <div id="puzzle-question">–</div>
+        <div style="font-size:0.78rem; color:var(--text-dim); margin-bottom:12px;">Type your answer:</div>
+        <div style="display:flex; gap:10px; justify-content:center;">
+          <input type="number" id="puzzle-input" placeholder="?" onkeydown="if(event.key==='Enter')submitMining()">
+          <button class="btn btn-primary btn-sm" onclick="submitMining()">Submit ⚡</button>
+        </div>
+      </div>
+      <div class="mining-arena" id="mining-arena">
+        <!-- Populated by JS -->
+      </div>
+      <div id="mining-result"></div>
+      <div style="margin-top:14px; display:flex; gap:10px; flex-wrap:wrap;">
+        <button class="btn btn-secondary btn-sm" onclick="startMining()">▶ Start New Round</button>
+      </div>
+    </div>
+
+    <div class="info-box">
+      <strong>How it really works:</strong> Real miners compute billions of calculations per second. The puzzle takes roughly 10 minutes for the whole network to solve, regardless of how powerful the computers become — Bitcoin adjusts the difficulty automatically. The winner earns newly created Bitcoin as a reward.
+    </div>
+
+    <div class="reveal-box" id="reveal-5">
+      <div class="reveal-label">💡 The Big Idea</div>
+      <p>
+        Mining serves two purposes: it <strong>creates new Bitcoin</strong> (the reward) and it <strong>secures the ledger</strong> 
+        (by requiring real computational work to write to it). 
+        The energy expenditure isn't waste — it's the lock on the safe.<br><br>
+        👉 Every 10 minutes, a new "page" of transactions is written. These pages chain together... which leads us to the blockchain.
+      </p>
+    </div>
+
+    <div class="stage-nav">
+      <button class="btn btn-secondary btn-sm" onclick="showReveal('reveal-5')">💡 Reveal Insight</button>
+      <button class="btn btn-primary" onclick="nextStage(6)">Next: Blockchain →</button>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════
+       STAGE 6 — BLOCKCHAIN
+  ══════════════════════════════════════════════════════ -->
+  <div class="stage" id="stage-6">
+
+    <div id="teacher-notes-6" class="teacher-panel">
+      <div class="teacher-label">👨‍🏫 Teacher Notes</div>
+      <div class="time-badge">⏱ 10 minutes</div>
+      <div class="teacher-section">
+        <h4>📢 Opening Script</h4>
+        <p>"Every 10 minutes, a new page of transactions gets added. But here's the genius part: each page contains a digital fingerprint of the previous page. They're chained together. Try to change an old page and you break every page after it."</p>
+      </div>
+      <div class="teacher-section">
+        <h4>🎯 Core Analogy</h4>
+        <p>Sealed numbered boxes stacked on top of each other. Each box has "Came after box #4" stamped on it. Try to swap out an old box — the numbers won't match anymore. Everyone can see the chain is broken.</p>
+      </div>
+      <div class="teacher-section">
+        <h4>❓ Discussion Questions</h4>
+        <ul>
+          <li>"Why is the linking of blocks so important?"</li>
+          <li>"What would someone need to do to change a transaction from 2 years ago?"</li>
+          <li>"How far back does Bitcoin's ledger go?" (January 2009)</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="stage-header">
+      <div class="stage-tag">Stage 6 · Immutability</div>
+      <h1 class="stage-title">Blocks & the <em>Chain</em></h1>
+      <p class="stage-subtitle">Each page of Bitcoin's ledger is sealed and linked to the previous one. Changing history breaks the entire chain — for everyone to see.</p>
+    </div>
+
+    <div class="card">
+      <div class="card-title">📦 The Blockchain — Click a Block to Tamper With It</div>
+      <p style="font-size:0.85rem; color:var(--text-dim); margin-bottom:16px;">
+        Below is a simplified blockchain. Each block contains a fingerprint of the previous one. 
+        Click any block (except the first) to see what happens when you try to change the past.
+      </p>
+      <div class="chain-container" id="chain-container">
+        <!-- Populated by JS -->
+      </div>
+      <div id="tamper-msg">⚠️ Chain integrity broken! Blocks 3, 4 & 5 are now invalid — all nodes would reject this.</div>
+      <div style="margin-top:14px; display:flex; gap:10px; flex-wrap:wrap;">
+        <button class="btn btn-secondary btn-sm" onclick="buildChain()">↺ Restore Chain</button>
+        <button class="btn btn-primary btn-sm" onclick="addBlock()">+ Add New Block</button>
+      </div>
+    </div>
+
+    <div class="info-box">
+      <strong>The fingerprint explained:</strong> Each block contains a "digital fingerprint" (a hash) of the previous block. 
+      Change any data in block 3 and its fingerprint changes — which breaks block 4's record of that fingerprint — which breaks block 5, and so on. 
+      You'd have to redo all subsequent blocks faster than the whole network is adding new ones. Practically impossible.
+    </div>
+
+    <div class="reveal-box" id="reveal-6">
+      <div class="reveal-label">💡 The Big Idea</div>
+      <p>
+        The blockchain is <strong>immutable</strong> — once a transaction is buried under enough blocks, 
+        changing it is computationally impossible. Bitcoin's ledger goes back to January 3rd, 2009, 
+        and every transaction since then is permanent and verifiable by anyone.<br><br>
+        👉 No bank can reverse your transaction. No government can delete it. History is history.
+      </p>
+    </div>
+
+    <div class="stage-nav">
+      <button class="btn btn-secondary btn-sm" onclick="showReveal('reveal-6')">💡 Reveal Insight</button>
+      <button class="btn btn-primary" onclick="nextStage(7)">Next: Keys & Ownership →</button>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════
+       STAGE 7 — KEYS & OWNERSHIP
+  ══════════════════════════════════════════════════════ -->
+  <div class="stage" id="stage-7">
+
+    <div id="teacher-notes-7" class="teacher-panel">
+      <div class="teacher-label">👨‍🏫 Teacher Notes</div>
+      <div class="time-badge">⏱ 10 minutes</div>
+      <div class="teacher-section">
+        <h4>📢 Opening Script</h4>
+        <p>"We've got a public ledger. But how do you prove it's YOUR money? In Bitcoin, you don't have an account with a username and password. You have a key. Like the key to a physical safe. No bank can take it. No company holds it. But if you lose it — it's gone forever."</p>
+      </div>
+      <div class="teacher-section">
+        <h4>🎯 Core Analogy</h4>
+        <p>Post box analogy. Your public address is like your post box slot — anyone can put letters (Bitcoin) in. Your private key is the key to open it and get things out. You'd share your slot number, never your key.</p>
+      </div>
+      <div class="teacher-section">
+        <h4>❓ Discussion Questions</h4>
+        <ul>
+          <li>"What's the difference between owning Bitcoin on an exchange vs. your own wallet?"</li>
+          <li>"What does 'not your keys, not your coins' mean?"</li>
+          <li>"How is this different from forgetting your bank password?"</li>
+        </ul>
+      </div>
+      <div class="teacher-section">
+        <h4>⚠️ Important Warning to Emphasise</h4>
+        <p>An estimated 3-4 million Bitcoin are permanently lost because people lost their private keys. This is a real, irreversible risk — part of what "real ownership" means.</p>
+      </div>
+    </div>
+
+    <div class="stage-header">
+      <div class="stage-tag">Stage 7 · Ownership</div>
+      <h1 class="stage-title">Keys & True <em>Ownership</em></h1>
+      <p class="stage-subtitle">Your Bitcoin isn't in an account. It's locked to a key — and only you hold it. No bank, no password reset, no recovery phone call.</p>
+    </div>
+
+    <div class="card">
+      <div class="card-title">🔑 Your Bitcoin Wallet — Generate a Key Pair</div>
+      <div class="key-visual">
+        <div class="key-card public-key">
+          <div class="key-icon">📬</div>
+          <div class="key-label">Public Address</div>
+          <div class="key-desc">Share this freely.<br>Anyone can send you Bitcoin here.</div>
+          <div class="key-value" id="public-addr">Press Generate to create your address</div>
+        </div>
+        <div class="key-card private-key">
+          <div class="key-icon">🔑</div>
+          <div class="key-label">Private Key</div>
+          <div class="key-desc">NEVER share this.<br>This controls your funds.</div>
+          <div class="key-value" id="private-key-display">Press Generate to create your key</div>
+        </div>
+      </div>
+      <div style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:14px;">
+        <button class="btn btn-primary btn-sm" onclick="generateKeys()">⚡ Generate Key Pair</button>
+        <button class="btn btn-secondary btn-sm" onclick="simulateSend()">💸 Simulate Receiving Bitcoin</button>
+        <button class="btn btn-secondary btn-sm" style="border-color:var(--red); color:var(--red);" onclick="loseKey()">💀 Lose Your Key</button>
+      </div>
+      <div id="key-status">Generate a key pair to begin.</div>
+    </div>
+
+    <div class="info-box">
+      <strong>The crucial difference:</strong> With a bank, you have an <em>account</em> — the bank holds your money and lets you access it. 
+      With Bitcoin, you have <em>keys</em> — you directly control digital property. 
+      There's no "forgot your key" button. This is true ownership, with all its responsibility.
+    </div>
+
+    <div class="reveal-box" id="reveal-7">
+      <div class="reveal-label">💡 The Big Idea</div>
+      <p>
+        <strong>"Not your keys, not your coins."</strong> If Bitcoin sits on an exchange, the exchange holds the keys — 
+        not you. You have an IOU, not Bitcoin. True Bitcoin ownership means holding your own private key.<br><br>
+        👉 This is a fundamentally different relationship with money. You are your own bank. 
+        The responsibility is real — and so is the freedom.
+      </p>
+    </div>
+
+    <div class="stage-nav">
+      <button class="btn btn-secondary btn-sm" onclick="showReveal('reveal-7')">💡 Reveal Insight</button>
+      <button class="btn btn-primary" onclick="nextStage(8)">Next: Scarcity →</button>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════
+       STAGE 8 — SCARCITY
+  ══════════════════════════════════════════════════════ -->
+  <div class="stage" id="stage-8">
+
+    <div id="teacher-notes-8" class="teacher-panel">
+      <div class="teacher-label">👨‍🏫 Teacher Notes</div>
+      <div class="time-badge">⏱ 10 minutes</div>
+      <div class="teacher-section">
+        <h4>📢 Opening Script</h4>
+        <p>"One thing Bitcoin does that no government currency has ever done: promise to only ever create a fixed amount. 21 million Bitcoin. That's it. Hardcoded into the rules. No politician can vote to print more. No board of governors can change it."</p>
+      </div>
+      <div class="teacher-section">
+        <h4>🎯 Core Analogy</h4>
+        <p>A gold mine that runs out — except you know exactly when and how much there is left, forever. Unlike gold though, you can verify Bitcoin's supply yourself by running software.</p>
+      </div>
+      <div class="teacher-section">
+        <h4>❓ Discussion Questions</h4>
+        <ul>
+          <li>"Why does scarcity make something valuable? Think of air vs. diamonds."</li>
+          <li>"What happens to the value of your savings when more money is printed?"</li>
+          <li>"What's the last Bitcoin expected to be mined?" (Around year 2140)</li>
+        </ul>
+      </div>
+      <div class="teacher-section">
+        <h4>💡 Halving Insight</h4>
+        <p>Every 4 years, the reward for mining gets cut in half. This creates predictable supply reduction. We've had 4 halvings: 2012, 2016, 2020, 2024. Bitcoin's inflation rate is now lower than gold's.</p>
+      </div>
+    </div>
+
+    <div class="stage-header">
+      <div class="stage-tag">Stage 8 · Scarcity</div>
+      <h1 class="stage-title">21 Million — <em>Digital Gold</em></h1>
+      <p class="stage-subtitle">There will only ever be 21 million Bitcoin. Not because of a company policy — because of mathematics written into the code itself.</p>
+    </div>
+
+    <div class="card">
+      <div class="card-title">📉 The Halving Timeline</div>
+      <p style="font-size:0.85rem; color:var(--text-dim); margin-bottom:16px;">
+        Every ~4 years, the reward miners earn is cut in half. This slows Bitcoin's creation rate over time.
+      </p>
+      <div class="halving-timeline">
+        <div class="halving-event" id="halving-2009">
+          <div class="halving-year">2009–2012</div>
+          <div class="halving-reward" style="color:var(--gold)">50 ₿</div>
+          <div class="halving-label">per block</div>
+        </div>
+        <div class="halving-event" id="halving-2012">
+          <div class="halving-year">2012–2016</div>
+          <div class="halving-reward" style="color:var(--gold)">25 ₿</div>
+          <div class="halving-label">Halving #1</div>
+        </div>
+        <div class="halving-event" id="halving-2016">
+          <div class="halving-year">2016–2020</div>
+          <div class="halving-reward" style="color:var(--orange)">12.5 ₿</div>
+          <div class="halving-label">Halving #2</div>
+        </div>
+        <div class="halving-event" id="halving-2020">
+          <div class="halving-year">2020–2024</div>
+          <div class="halving-reward" style="color:var(--orange)">6.25 ₿</div>
+          <div class="halving-label">Halving #3</div>
+        </div>
+        <div class="halving-event active" id="halving-2024">
+          <div class="halving-year">2024–2028 ←NOW</div>
+          <div class="halving-reward" style="color:var(--orange)">3.125 ₿</div>
+          <div class="halving-label">Halving #4</div>
+        </div>
+        <div class="halving-event" id="halving-2028">
+          <div class="halving-year">2028–2032</div>
+          <div class="halving-reward" style="color:var(--text-dim)">1.5625 ₿</div>
+          <div class="halving-label">Halving #5</div>
+        </div>
+        <div class="halving-event" id="halving-future">
+          <div class="halving-year">~2140</div>
+          <div class="halving-reward" style="color:var(--text-faint)">0 ₿</div>
+          <div class="halving-label">Final Bitcoin</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">📊 Bitcoin Supply Counter</div>
+      <p style="font-size:0.85rem; color:var(--text-dim); margin-bottom:16px;">
+        Over 19.8 million Bitcoin have already been mined. Less than 1.2 million remain.
+      </p>
+      <div class="supply-visual">
+        <div id="supply-bar"><span id="supply-count">19.8M</span></div>
+      </div>
+      <div class="supply-label-row">
+        <span>0</span>
+        <span id="supply-pct-label">94.3% mined</span>
+        <span>21M (Max)</span>
+      </div>
+      <div style="display:flex; gap:10px; margin-top:14px; flex-wrap:wrap;">
+        <button class="btn btn-primary btn-sm" onclick="animateSupply()">▶ Animate Supply</button>
+        <button class="btn btn-secondary btn-sm" onclick="fastForwardHalving()">⏩ Simulate Next Halving</button>
+      </div>
+    </div>
+
+    <div class="reveal-box" id="reveal-8">
+      <div class="reveal-label">💡 The Big Idea</div>
+      <p>
+        Bitcoin is the first currency in history with a <strong>perfectly predictable supply schedule</strong>. 
+        You can calculate exactly how many Bitcoin will exist on any date in the future. 
+        No central bank meeting required. No government decree needed.<br><br>
+        👉 When more money is printed, each unit buys less (inflation). When supply is fixed and demand grows, 
+        each unit buys more. This is the mathematical opposite of inflation.
+      </p>
+    </div>
+
+    <div class="stage-nav">
+      <button class="btn btn-secondary btn-sm" onclick="showReveal('reveal-8')">💡 Reveal Insight</button>
+      <button class="btn btn-primary" onclick="nextStage(9)">Next: Why It All Matters →</button>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════
+       STAGE 9 — FINAL COMPARISON
+  ══════════════════════════════════════════════════════ -->
+  <div class="stage" id="stage-9">
+
+    <div id="teacher-notes-9" class="teacher-panel">
+      <div class="teacher-label">👨‍🏫 Teacher Notes</div>
+      <div class="time-badge">⏱ 15 minutes + discussion</div>
+      <div class="teacher-section">
+        <h4>📢 Opening Script</h4>
+        <p>"Let's bring it all together. We've seen what money is, why banks exist, what Bitcoin solves, and how it works. Now let's see when and why Bitcoin matters — and when it doesn't."</div>
+      <div class="teacher-section">
+        <h4>🎯 Workshop Activity</h4>
+        <p>Use the three scenario buttons. For each one, ask the group: "In this scenario, is Bitcoin better or worse than the bank? Why?" This generates brilliant discussion.</p>
+      </div>
+      <div class="teacher-section">
+        <h4>❓ Closing Questions</h4>
+        <ul>
+          <li>"Has your view of Bitcoin changed from the start of today?"</li>
+          <li>"What would you still want to understand better?"</li>
+          <li>"Who do you think benefits most from Bitcoin existing?"</li>
+        </ul>
+      </div>
+      <div class="teacher-section">
+        <h4>💡 One-Line Summary to Leave Them With</h4>
+        <p style="color:var(--gold); font-size:0.95rem;">"Bitcoin isn't complicated. It's just money — without a bank."</p>
+      </div>
+    </div>
+
+    <div class="stage-header">
+      <div class="stage-tag">Stage 9 · The Big Picture</div>
+      <h1 class="stage-title">Why <em>Bitcoin Matters</em></h1>
+      <p class="stage-subtitle">Let's put it all together. Where does Bitcoin fit in the world, and what does it change?</p>
+    </div>
+
+    <div class="card">
+      <div class="card-title">⚖️ Fiat vs Bitcoin — Head to Head</div>
+      <table class="comparison-table">
+        <thead>
+          <tr>
+            <th>Property</th>
+            <th class="fiat-head">🏦 Fiat (Banks)</th>
+            <th class="btc-head">₿ Bitcoin</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>Who controls it?</td><td class="fiat-cell">Government + Central Bank</td><td class="btc-cell">Nobody / Everyone</td></tr>
+          <tr><td>Supply</td><td class="fiat-cell">Unlimited — can print more</td><td class="btc-cell">Fixed at 21 million</td></tr>
+          <tr><td>Can freeze your funds?</td><td class="fiat-cell">Yes — legally required</td><td class="btc-cell">Impossible without your key</td></tr>
+          <tr><td>International transfer</td><td class="fiat-cell">3–5 days, high fees</td><td class="btc-cell">~10 min, any amount</td></tr>
+          <tr><td>Need permission?</td><td class="fiat-cell">Yes — ID, credit checks</td><td class="btc-cell">No — open to anyone</td></tr>
+          <tr><td>24/7 operation?</td><td class="fiat-cell">Business hours only</td><td class="btc-cell">Never closes</td></tr>
+          <tr><td>Account recovery?</td><td class="fiat-cell">Yes — call the bank</td><td class="btc-cell">No — keep your key safe</td></tr>
+          <tr><td>Backed by?</td><td class="fiat-cell">Government decree + trust</td><td class="btc-cell">Mathematics + energy + code</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="card">
+      <div class="card-title">🎭 Scenario Explorer — How Does Bitcoin Compare?</div>
+      <div class="scenario-btn-row">
+        <button class="scenario-btn" onclick="showScenario('collapse')">🏦 Bank Collapse</button>
+        <button class="scenario-btn" onclick="showScenario('inflation')">📉 Hyperinflation</button>
+        <button class="scenario-btn" onclick="showScenario('crossborder')">🌍 Send Money Abroad</button>
+      </div>
+      <div id="scenario-result">
+        <div style="color:var(--text-faint); font-size:0.88rem; text-align:center; width:100%; align-self:center;">
+          Click a scenario above to explore
+        </div>
+      </div>
+    </div>
+
+    <div class="reveal-box visible" id="reveal-9">
+      <div class="reveal-label">🎓 Course Complete</div>
+      <p>
+        You now understand what money is, why banks exist, what Bitcoin solves, how transactions work, 
+        what mining does, why the blockchain is immutable, how keys grant ownership, and why 21 million is significant.<br><br>
+        <strong>The one-line summary:</strong> <em>"Bitcoin is money without a bank — secured by mathematics, owned by no one, open to everyone."</em>
+      </p>
+    </div>
+
+    <div class="stage-nav">
+      <button class="btn btn-primary" onclick="showCompletion()" style="font-size:1rem; padding:14px 32px;">
+        🎓 Complete the Course →
+      </button>
+    </div>
+  </div>
+
+</div><!-- /main -->
+
+<!-- ══ COMPLETION SCREEN ══ -->
+<div id="completion-screen">
+  <div class="completion-emoji">🎓</div>
+  <h1 class="completion-title">You <em>Decoded</em><br>Bitcoin.</h1>
+  <p class="completion-sub">
+    You went from "Bitcoin sounds confusing" to understanding exactly how it works. 
+    That puts you ahead of most people on the planet.
+  </p>
+  <div class="cert-card">
+    <div class="cert-title">Certificate of Completion</div>
+    <div class="cert-name">Bitcoin Decoded</div>
+    <div class="cert-desc">
+      Successfully completed all 9 stages of the Bitcoin Decoded interactive learning experience. 
+      Demonstrated understanding of distributed ledgers, digital scarcity, and trustless money.
+    </div>
+    <div class="cert-sig">Bitcoin Decoded · Educational Learning Experience · <span id="cert-date"></span></div>
+  </div>
+  <div style="display:flex; gap:12px; flex-wrap:wrap; justify-content:center;">
+    <button class="btn btn-primary" onclick="window.print()">🖨️ Print Certificate</button>
+    <button class="btn btn-secondary" onclick="restartCourse()">↺ Restart Course</button>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════════════════════════
+//  STATE
+// ══════════════════════════════════════════════════════════════
+let currentStage = 1;
+let totalStages = 9;
+let teacherMode = false;
+let balances = { alice: 1000, bob: 500, carol: 750 };
+let aliceFrozen = false;
+let miningInterval = null;
+let miningAnswer = null;
+let minerTimers = [];
+let keysGenerated = false;
+let currentPublicKey = '';
+let btcBalance = 0;
+let chainBlocks = [];
+let blockData = [
+  { num: 1, label: 'Genesis', txn: 'System Reward: 50₿', genesis: true },
+  { num: 2, label: 'Block 2', txn: 'Alice→Bob: 1.5₿' },
+  { num: 3, label: 'Block 3', txn: 'Carol→Alice: 0.8₿' },
+  { num: 4, label: 'Block 4', txn: 'Bob→Carol: 2.1₿' },
+  { num: 5, label: 'Block 5', txn: 'Alice→Carol: 0.3₿' },
+];
+let ticketUsed = false;
+let spendCount = 0;
+
+const WITNESSES = [
+  { emoji:'🇺🇸', name:'Texas, USA' }, { emoji:'🇩🇪', name:'Berlin, DE' },
+  { emoji:'🇯🇵', name:'Tokyo, JP' }, { emoji:'🇧🇷', name:'São Paulo, BR' },
+  { emoji:'🇦🇺', name:'Sydney, AU' }, { emoji:'🇨🇦', name:'Toronto, CA' },
+  { emoji:'🇿🇦', name:'Cape Town, SA' }, { emoji:'🇸🇬', name:'Singapore, SG' },
+  { emoji:'🇬🇧', name:'London, UK' }, { emoji:'🇳🇴', name:'Oslo, NO' },
+  { emoji:'🇮🇳', name:'Mumbai, IN' }, { emoji:'🇦🇷', name:'Buenos Aires' },
+];
+
+// ══════════════════════════════════════════════════════════════
+//  INIT
+// ══════════════════════════════════════════════════════════════
+function startJourney() {
+  document.getElementById('intro-screen').classList.add('hidden');
+  document.getElementById('main').style.display = 'block';
+  buildNavDots();
+  buildWitnesses();
+  buildChain();
+  buildMiningArena();
+  startMining();
+  animateSupply();
+  updateProgress();
+}
+
+function buildNavDots() {
+  const container = document.getElementById('stage-nav-dots');
+  container.innerHTML = '';
+  for (let i = 1; i <= totalStages; i++) {
+    const dot = document.createElement('div');
+    dot.className = 'nav-dot' + (i === 1 ? ' active' : '');
+    dot.title = 'Stage ' + i;
+    dot.onclick = () => goToStage(i);
+    dot.id = 'dot-' + i;
+    container.appendChild(dot);
+  }
+}
+
+function updateProgress() {
+  const pct = (currentStage / totalStages) * 100;
+  document.getElementById('progress-fill').style.width = pct + '%';
+  document.getElementById('progress-label').textContent = `Stage ${currentStage} of ${totalStages}`;
+  for (let i = 1; i <= totalStages; i++) {
+    const dot = document.getElementById('dot-' + i);
+    if (!dot) continue;
+    dot.className = 'nav-dot';
+    if (i < currentStage) dot.classList.add('done');
+    if (i === currentStage) dot.classList.add('active');
+  }
+}
+
+function nextStage(n) {
+  goToStage(n);
+}
+
+function goToStage(n) {
+  document.querySelectorAll('.stage').forEach(s => s.classList.remove('active'));
+  const target = document.getElementById('stage-' + n);
+  if (target) {
+    target.classList.add('active');
+    currentStage = n;
+    updateProgress();
+    window.scrollTo({ top: 60, behavior: 'smooth' });
+    updateTeacherPanels();
+  }
+}
+
+// ══════════════════════════════════════════════════════════════
+//  TEACHER MODE
+// ══════════════════════════════════════════════════════════════
+function toggleTeacher() {
+  teacherMode = !teacherMode;
+  const btn = document.getElementById('teacher-btn');
+  btn.classList.toggle('active', teacherMode);
+  btn.textContent = teacherMode ? '✅ Teacher Mode ON' : '👨‍🏫 Teacher Mode';
+  updateTeacherPanels();
+}
+
+function updateTeacherPanels() {
+  document.querySelectorAll('.teacher-panel').forEach(p => {
+    p.classList.remove('visible');
+  });
+  if (teacherMode) {
+    const panel = document.getElementById('teacher-notes-' + currentStage);
+    if (panel) panel.classList.add('visible');
+  }
+}
+
+// ══════════════════════════════════════════════════════════════
+//  STAGE 1 — BARTER
+// ══════════════════════════════════════════════════════════════
+let barterSelections = {};
+
+function selectGood(el, trader, good) {
+  // Deselect others in same trader group
+  el.closest('.trader').querySelectorAll('.good-chip').forEach(c => c.classList.remove('selected'));
+  el.classList.add('selected');
+  barterSelections[trader] = good;
+  checkBarter();
+}
+
+function checkBarter() {
+  const result = document.getElementById('barter-result');
+  if (!barterSelections.alice || !barterSelections.bob) {
+    result.className = '';
+    result.textContent = 'Select one item from each trader to attempt a trade.';
+    return;
+  }
+  const aliceHas = barterSelections.alice;
+  const bobWants = 'Tools 🔧';
+  const aliceWants = 'Tools 🔧';
+  const bobHas = barterSelections.bob;
+
+  if (bobHas === aliceWants && aliceHas === bobWants) {
+    // Perfect match - unlikely since Alice wants tools and Bob has tools, Alice has crops but Bob wants fish
+    result.className = 'success';
+    result.textContent = `✅ Trade successful! ${aliceHas} for ${bobHas}`;
+  } else if (bobHas === aliceWants) {
+    result.className = 'fail';
+    result.innerHTML = `❌ No deal. Bob has ${bobHas} (what Alice wants!), but Bob wants Fish 🐟 — and Alice doesn't have fish.<br><br>This is the <strong>Double Coincidence of Wants problem</strong>. Both sides must want what the other has.`;
+  } else {
+    result.className = 'fail';
+    result.innerHTML = `❌ No deal. Alice has ${aliceHas} but Bob wants Fish 🐟, and Bob has ${bobHas} but Alice wants Tools 🔧.<br><br>In a barter economy, you need to find someone who wants exactly what you have <em>and</em> has exactly what you want.`;
+  }
+}
+
+// ══════════════════════════════════════════════════════════════
+//  STAGE 2 — LEDGER
+// ══════════════════════════════════════════════════════════════
+function updateBalanceDisplay() {
+  ['alice','bob','carol'].forEach(name => {
+    const el = document.getElementById('bal-' + name);
+    el.textContent = '£' + balances[name].toLocaleString();
+    el.className = 'account-balance' + (name === 'alice' && aliceFrozen ? ' frozen' : '');
+  });
+}
+
+function addLog(msg, type = '') {
+  const log = document.getElementById('ledger-log');
+  const entry = document.createElement('div');
+  entry.className = 'log-entry ' + type;
+  entry.textContent = new Date().toLocaleTimeString() + ' — ' + msg;
+  log.insertBefore(entry, log.firstChild);
+}
+
+function doTransfer() {
+  const from = document.getElementById('send-from').value;
+  const to = document.getElementById('send-to').value;
+  const amount = parseInt(document.getElementById('send-amount').value) || 0;
+
+  if (from === to) { addLog('Cannot send to yourself.', 'log-fail'); return; }
+  if (amount <= 0) { addLog('Invalid amount.', 'log-fail'); return; }
+  if (from === 'alice' && aliceFrozen) {
+    addLog(`❌ BLOCKED: Alice's account is frozen by the bank.`, 'log-fail');
+    return;
+  }
+  if (balances[from] < amount) {
+    addLog(`❌ ${from.charAt(0).toUpperCase()+from.slice(1)} has insufficient funds (£${balances[from]}).`, 'log-fail');
+    return;
+  }
+  balances[from] -= amount;
+  balances[to] += amount;
+  updateBalanceDisplay();
+  addLog(`✅ Sent £${amount} from ${from} to ${to}. Bank updated ledger.`, 'log-ok');
+}
+
+function doFreeze() {
+  aliceFrozen = true;
+  updateBalanceDisplay();
+  const el = document.getElementById('problem-result');
+  el.style.display = 'block';
+  el.textContent = '🔒 Alice\'s account has been frozen by the bank. She cannot send or receive money — even though she earned it legitimately. This happens in disputed transactions, government orders, or technical errors. Alice has no recourse.';
+  addLog('🔒 BANK ACTION: Alice\'s account frozen', 'log-fail');
+}
+
+function doInflation() {
+  ['alice','bob','carol'].forEach(n => balances[n] = Math.round(balances[n] * 0.92));
+  updateBalanceDisplay();
+  const el = document.getElementById('problem-result');
+  el.style.display = 'block';
+  el.textContent = '📉 The government printed more money. Due to inflation, each pound buys 8% less than before. Everyone\'s real purchasing power dropped — even though the numbers look the same. Savings are silently eroded.';
+  addLog('📉 MONETARY POLICY: New money printed, purchasing power diluted', 'log-fail');
+}
+
+function doPermission() {
+  const el = document.getElementById('problem-result');
+  el.style.display = 'block';
+  el.textContent = '🚫 Bob\'s transfer to a family member abroad was blocked. The bank requires additional documents, compliance approval, or decides the transaction is "suspicious." Bob has to wait days, pay fees, and justify how he spends his own money.';
+  addLog('🚫 BANK DECISION: Bob\'s international transfer blocked', 'log-fail');
+}
+
+function resetLedger() {
+  balances = { alice: 1000, bob: 500, carol: 750 };
+  aliceFrozen = false;
+  updateBalanceDisplay();
+  document.getElementById('ledger-log').innerHTML = '<div class="log-entry" style="color:var(--text-faint)">— Bank ledger reset. —</div>';
+  document.getElementById('problem-result').style.display = 'none';
+}
+
+// ══════════════════════════════════════════════════════════════
+//  STAGE 3 — DOUBLE SPEND
+// ══════════════════════════════════════════════════════════════
+let spentTo = [];
+
+function spendTicket(merchant) {
+  const status = document.getElementById('spend-status');
+  const container = document.getElementById('ticket-container');
+
+  if (spendCount === 0) {
+    // First spend
+    spendCount++;
+    spentTo.push(merchant);
+    status.textContent = `✅ Payment accepted by ${merchant.replace('merchant','')}. Transaction recorded.`;
+    status.style.color = 'var(--green)';
+    
+    // Mark original as used
+    document.getElementById('original-ticket').classList.add('used');
+    
+    // Add "copy" attempt
+    const copy = document.createElement('div');
+    copy.className = 'ticket copy';
+    copy.innerHTML = `🎟️ Digital £10 (Copy?)<div class="ticket-id">ID: 0x4f2a...9c1e — SAME ID!</div>`;
+    container.appendChild(copy);
+
+  } else {
+    spendCount++;
+    status.innerHTML = `❌ FRAUD DETECTED! This digital money has already been spent with Merchant ${spentTo[0].replace('merchant','')}. Without a bank to track this, someone could copy and spend the same coin ${spendCount} times. The entire system breaks.`;
+    status.style.color = 'var(--red)';
+    
+    if (spendCount >= 3) {
+      status.innerHTML += '<br><br><strong>🔥 System collapse:</strong> If anyone could copy money, digital currency would be worthless. This is why we needed Bitcoin\'s solution.';
+    }
+  }
+}
+
+function resetTickets() {
+  spendCount = 0;
+  spentTo = [];
+  document.getElementById('ticket-container').innerHTML = `
+    <div class="ticket" id="original-ticket">
+      🎟️ Digital £10
+      <div class="ticket-id">ID: 0x4f2a...9c1e</div>
+    </div>`;
+  document.getElementById('spend-status').textContent = '';
+  document.getElementById('spend-status').style.color = '';
+}
+
+// ══════════════════════════════════════════════════════════════
+//  STAGE 4 — DISTRIBUTED LEDGER
+// ══════════════════════════════════════════════════════════════
+function buildWitnesses() {
+  const grid = document.getElementById('witness-grid');
+  grid.innerHTML = '';
+  WITNESSES.forEach((w, i) => {
+    const node = document.createElement('div');
+    node.className = 'witness-node';
+    node.id = 'witness-' + i;
+    node.innerHTML = `<div class="node-emoji">${w.emoji}</div><div class="node-name">${w.name}</div><div class="node-status">Waiting...</div>`;
+    grid.appendChild(node);
+  });
+}
+
+function runConsensus(fraud = false) {
+  resetConsensus();
+  const result = document.getElementById('consensus-result');
+  result.style.display = 'none';
+
+  let approved = 0;
+  let total = WITNESSES.length;
+  
+  WITNESSES.forEach((w, i) => {
+    const delay = 200 + i * 180 + Math.random() * 200;
+    setTimeout(() => {
+      const node = document.getElementById('witness-' + i);
+      if (!node) return;
+      node.classList.add('checking');
+      node.querySelector('.node-status').textContent = 'Checking...';
+
+      setTimeout(() => {
+        node.classList.remove('checking');
+        if (fraud) {
+          // Fraudulent TX - some reject, most reject
+          const rejects = Math.random() < 0.85;
+          if (rejects) {
+            node.classList.add('rejected');
+            node.querySelector('.node-status').textContent = '❌ Rejected';
+          } else {
+            node.classList.add('approved');
+            node.querySelector('.node-status').textContent = '✓ Approved';
+            approved++;
+          }
+        } else {
+          node.classList.add('approved');
+          node.querySelector('.node-status').textContent = '✓ Approved';
+          approved++;
+        }
+
+        const pct = Math.round((approved / total) * 100);
+        document.getElementById('consensus-fill').style.width = pct + '%';
+        document.getElementById('consensus-pct').textContent = pct + '%';
+
+        if (i === WITNESSES.length - 1) {
+          setTimeout(() => {
+            result.style.display = 'block';
+            if (fraud) {
+              result.style.background = 'rgba(239,68,68,0.08)';
+              result.style.border = '1px solid var(--red)';
+              result.style.color = 'var(--red)';
+              result.textContent = `❌ Transaction REJECTED by the network. Only ${approved}/${total} nodes approved — below the required threshold. The fraud attempt failed automatically.`;
+            } else {
+              result.style.background = 'rgba(6,214,160,0.08)';
+              result.style.border = '1px solid var(--green)';
+              result.style.color = 'var(--green)';
+              result.textContent = `✅ Transaction CONFIRMED! ${approved}/${total} independent witnesses verified it. The transaction is now added to the blockchain. No bank required.`;
+            }
+          }, 300);
+        }
+      }, 400);
+    }, delay);
+  });
+}
+
+function tryFraudTx() {
+  document.getElementById('tx-display').innerHTML = `
+    <div style="color:var(--text-dim); font-size:0.78rem; margin-bottom:6px;">SUSPICIOUS TRANSACTION</div>
+    <div style="color:var(--red)">Mallory → Mallory: 100 Bitcoin (ALREADY SPENT)</div>
+    <div style="color:var(--text-faint); font-size:0.72rem; margin-top:4px;">Attempting double-spend attack...</div>`;
+  runConsensus(true);
+}
+
+function resetConsensus() {
+  WITNESSES.forEach((w, i) => {
+    const node = document.getElementById('witness-' + i);
+    if (!node) return;
+    node.className = 'witness-node';
+    node.querySelector('.node-status').textContent = 'Waiting...';
+  });
+  document.getElementById('consensus-fill').style.width = '0%';
+  document.getElementById('consensus-pct').textContent = '0%';
+  document.getElementById('consensus-result').style.display = 'none';
+  document.getElementById('tx-display').innerHTML = `
+    <div style="color:var(--text-dim); font-size:0.78rem; margin-bottom:6px;">PENDING TRANSACTION</div>
+    <div style="color:var(--gold)">Alice → Bob: 0.5 Bitcoin</div>
+    <div style="color:var(--text-faint); font-size:0.72rem; margin-top:4px;">Broadcasting to 12,450 independent nodes worldwide...</div>`;
+}
+
+// ══════════════════════════════════════════════════════════════
+//  STAGE 5 — MINING
+// ══════════════════════════════════════════════════════════════
+const MINERS = [
+  { name: 'AntPool (China)', emoji: '🏭', speed: 'fast', time: 6000 },
+  { name: 'Foundry USA', emoji: '🇺🇸', speed: 'medium', time: 9000 },
+  { name: 'You', emoji: '💻', speed: 'slow', time: null }, // Player
+  { name: 'ViaBTC', emoji: '🌐', speed: 'fast', time: 7000 },
+];
+
+let miningPuzzle = null;
+let miningDone = false;
+let miningTimers = [];
+
+function buildMiningArena() {
+  const arena = document.getElementById('mining-arena');
+  arena.innerHTML = '';
+  MINERS.forEach((m, i) => {
+    const card = document.createElement('div');
+    card.className = 'miner-card';
+    card.id = 'miner-' + i;
+    card.innerHTML = `
+      <div class="miner-emoji">${m.emoji}</div>
+      <div class="miner-name">${m.name}</div>
+      <div class="miner-progress"><div class="miner-bar ${m.speed}" id="bar-${i}"></div></div>
+      <div class="miner-status" id="status-${i}" style="font-size:0.75rem; color:var(--text-dim);">Ready</div>`;
+    arena.appendChild(card);
+  });
+}
+
+function genPuzzle() {
+  const ops = [
+    { q: '17 × 8 = ?', a: 136 },
+    { q: '234 ÷ 6 = ?', a: 39 },
+    { q: '19 + 87 + 44 = ?', a: 150 },
+    { q: '15² = ?', a: 225 },
+    { q: '7 × 13 + 6 = ?', a: 97 },
+    { q: '450 – 137 = ?', a: 313 },
+    { q: '24 × 9 = ?', a: 216 },
+    { q: '√196 = ?', a: 14 },
+  ];
+  return ops[Math.floor(Math.random() * ops.length)];
+}
+
+function startMining() {
+  // Clear previous
+  miningTimers.forEach(t => clearTimeout(t));
+  miningTimers = [];
+  miningDone = false;
+  document.getElementById('mining-result').className = '';
+  document.getElementById('mining-result').textContent = '';
+  document.getElementById('puzzle-input').value = '';
+  document.getElementById('puzzle-input').disabled = false;
+
+  buildMiningArena();
+
+  miningPuzzle = genPuzzle();
+  document.getElementById('puzzle-question').textContent = miningPuzzle.q;
+
+  // Start competitor progress bars
+  MINERS.forEach((m, i) => {
+    if (!m.time) return; // Skip player
+    const bar = document.getElementById('bar-' + i);
+    const status = document.getElementById('status-' + i);
+    let progress = 0;
+    const interval = setInterval(() => {
+      if (miningDone) { clearInterval(interval); return; }
+      progress += (100 / (m.time / 100)) * (0.8 + Math.random() * 0.4);
+      if (progress >= 100) {
+        progress = 100;
+        clearInterval(interval);
+        if (!miningDone) minerWins(i, m.name);
+      }
+      bar.style.width = Math.min(progress, 100) + '%';
+      status.textContent = Math.round(progress) + '%';
+    }, 100);
+    miningTimers.push(interval);
+  });
+}
+
+function submitMining() {
+  if (miningDone) return;
+  const answer = parseInt(document.getElementById('puzzle-input').value);
+  if (answer === miningPuzzle.a) {
+    minerWins(2, 'You'); // Index 2 = player
+  } else {
+    const status = document.getElementById('status-2');
+    status.textContent = '❌ Wrong!';
+    document.getElementById('puzzle-input').value = '';
+    document.getElementById('puzzle-input').style.borderColor = 'var(--red)';
+    setTimeout(() => {
+      document.getElementById('puzzle-input').style.borderColor = '';
+    }, 1000);
+  }
+}
+
+function minerWins(idx, name) {
+  miningDone = true;
+  miningTimers.forEach(t => clearInterval(t));
+  document.getElementById('puzzle-input').disabled = true;
+
+  // Update miner cards
+  MINERS.forEach((m, i) => {
+    const card = document.getElementById('miner-' + i);
+    const bar = document.getElementById('bar-' + i);
+    if (i === idx) {
+      card.classList.add('winner');
+      bar.style.width = '100%';
+      document.getElementById('status-' + i).textContent = '🏆 WINNER';
+    } else {
+      card.classList.add('loser');
+    }
+  });
+
+  const resultEl = document.getElementById('mining-result');
+  if (name === 'You') {
+    resultEl.className = 'win';
+    resultEl.innerHTML = `🏆 You won this round! You solved the puzzle first and earned the right to write the next block to the blockchain — plus a Bitcoin reward. In reality, miners do this with billions of calculations per second.`;
+  } else {
+    resultEl.className = 'lose';
+    resultEl.innerHTML = `⛏️ ${name} solved it first and earns the block reward. Don't worry — another puzzle begins in ~10 minutes. This competition happens continuously, 24/7, securing the network.`;
+  }
+}
+
+// ══════════════════════════════════════════════════════════════
+//  STAGE 6 — BLOCKCHAIN
+// ══════════════════════════════════════════════════════════════
+function simpleHash(data) {
+  let h = 0x811c9dc5;
+  for (let i = 0; i < data.length; i++) {
+    h ^= data.charCodeAt(i);
+    h = (h * 0x01000193) >>> 0;
+  }
+  return h.toString(16).padStart(8,'0');
+}
+
+function buildChain() {
+  const container = document.getElementById('chain-container');
+  container.innerHTML = '';
+  document.getElementById('tamper-msg').style.display = 'none';
+
+  let prevHash = '00000000';
+  chainBlocks = [];
+
+  blockData.forEach((b, i) => {
+    const hash = simpleHash(prevHash + b.txn + b.num);
+    chainBlocks.push({ ...b, hash, prevHash });
+    prevHash = hash;
+  });
+
+  chainBlocks.forEach((b, i) => {
+    if (i > 0) {
+      const link = document.createElement('div');
+      link.className = 'chain-link';
+      link.id = 'link-' + i;
+      link.textContent = '⛓';
+      container.appendChild(link);
+    }
+
+    const block = document.createElement('div');
+    block.className = 'block-item' + (b.genesis ? ' genesis' : '');
+    block.id = 'block-' + i;
+    block.innerHTML = `
+      <div class="block-num">Block #${b.num}</div>
+      <div class="block-hash">Prev: ${b.prevHash.substring(0,8)}...</div>
+      <div class="block-data">${b.txn}</div>
+      <div class="block-hash">Hash: ${b.hash.substring(0,8)}...</div>`;
+    if (!b.genesis) {
+      block.onclick = () => tamperBlock(i);
+      block.title = 'Click to tamper with this block';
+    }
+    container.appendChild(block);
+  });
+}
+
+function tamperBlock(idx) {
+  document.getElementById('tamper-msg').style.display = 'block';
+  // Mark tampered block and all subsequent as broken
+  for (let i = idx; i < chainBlocks.length; i++) {
+    const blockEl = document.getElementById('block-' + i);
+    if (blockEl) {
+      blockEl.classList.add(i === idx ? 'tampered' : 'broken');
+    }
+    if (i > 0) {
+      const linkEl = document.getElementById('link-' + i);
+      if (linkEl) linkEl.classList.add('broken');
+    }
+  }
+}
+
+function addBlock() {
+  const newNum = blockData.length + 1;
+  blockData.push({
+    num: newNum,
+    label: 'Block ' + newNum,
+    txn: 'New TX: +0.' + Math.floor(Math.random()*9+1) + '₿'
+  });
+  buildChain();
+}
+
+// ══════════════════════════════════════════════════════════════
+//  STAGE 7 — KEYS
+// ══════════════════════════════════════════════════════════════
+function randHex(n) {
+  let s = '';
+  for (let i = 0; i < n; i++) s += '0123456789abcdef'[Math.floor(Math.random() * 16)];
+  return s;
+}
+
+function generateKeys() {
+  keysGenerated = true;
+  btcBalance = 0;
+  currentPublicKey = '1' + randHex(33);
+  const privKey = randHex(64);
+
+  document.getElementById('public-addr').textContent = currentPublicKey;
+  document.getElementById('private-key-display').textContent = privKey;
+
+  const status = document.getElementById('key-status');
+  status.className = '';
+  status.textContent = '✅ Key pair generated. Your public address is ready to receive Bitcoin. Keep your private key secret!';
+}
+
+function simulateSend() {
+  if (!keysGenerated) {
+    document.getElementById('key-status').textContent = 'Please generate a key pair first.';
+    return;
+  }
+  btcBalance += parseFloat((Math.random() * 0.5 + 0.01).toFixed(4));
+  const status = document.getElementById('key-status');
+  status.className = 'safe';
+  status.textContent = `✅ Received Bitcoin! Your address (${currentPublicKey.substring(0,10)}...) now holds ${btcBalance.toFixed(4)} BTC. The blockchain records this publicly — but only your private key can authorise spending it.`;
+}
+
+function loseKey() {
+  if (!keysGenerated) {
+    document.getElementById('key-status').textContent = 'Generate a key pair first.';
+    return;
+  }
+  document.getElementById('private-key-display').textContent = '(KEY LOST — GONE FOREVER)';
+  const status = document.getElementById('key-status');
+  status.className = 'danger';
+  status.innerHTML = `💀 Your private key is lost. The ${btcBalance > 0 ? btcBalance.toFixed(4) + ' BTC' : 'funds'} at your address are now permanently inaccessible — forever. There is no Bitcoin helpdesk. No recovery email. No reset button. This is the cost of true ownership. An estimated 3–4 million Bitcoin are permanently lost this way.`;
+}
+
+// ══════════════════════════════════════════════════════════════
+//  STAGE 8 — SCARCITY
+// ══════════════════════════════════════════════════════════════
+function animateSupply() {
+  const bar = document.getElementById('supply-bar');
+  const count = document.getElementById('supply-count');
+  bar.style.width = '0%';
+  count.textContent = '0';
+  
+  let current = 0;
+  const target = 19.8;
+  const maxPct = 94.3;
+  
+  const step = () => {
+    current += 0.3;
+    if (current > target) current = target;
+    const pct = (current / 21) * 100;
+    bar.style.width = pct + '%';
+    count.textContent = current.toFixed(1) + 'M';
+    if (current < target) requestAnimationFrame(step);
+    else {
+      count.textContent = '19.8M';
+      document.getElementById('supply-pct-label').textContent = '94.3% mined';
+    }
+  };
+  setTimeout(step, 300);
+}
+
+function fastForwardHalving() {
+  const bar = document.getElementById('supply-bar');
+  const count = document.getElementById('supply-count');
+  
+  let current = 19.8;
+  const target = 20.4;
+  
+  const step = () => {
+    current += 0.02;
+    if (current > target) current = target;
+    const pct = (current / 21) * 100;
+    bar.style.width = pct + '%';
+    count.textContent = current.toFixed(2) + 'M';
+    const remaining = (21 - current).toFixed(2);
+    document.getElementById('supply-pct-label').textContent = `Only ${remaining}M remaining`;
+    if (current < target) setTimeout(step, 50);
+  };
+  step();
+}
+
+// ══════════════════════════════════════════════════════════════
+//  STAGE 9 — SCENARIOS
+// ══════════════════════════════════════════════════════════════
+const SCENARIOS = {
+  collapse: {
+    title: '🏦 Bank Collapse',
+    fiat: 'Your savings are at risk. If the bank fails, deposits above the government guarantee (£85k in UK) could be lost. In 2012, Cyprus banks confiscated 47% of deposits above €100k.',
+    btc: 'Your Bitcoin is held by your private key — not a bank. No bank collapse can touch it. It exists independently on the blockchain. Your keys, your coins.'
+  },
+  inflation: {
+    title: '📉 Hyperinflation',
+    fiat: 'When governments print excessive money, prices rise. Zimbabwe (2008): prices doubled every 24 hours. Venezuela (2018): inflation reached 1,000,000%. Savings wiped out.',
+    btc: 'Bitcoin\'s supply is fixed forever at 21 million. It cannot be inflated by any government decision. Historically, Bitcoin\'s purchasing power has increased as its adoption grows.'
+  },
+  crossborder: {
+    title: '🌍 Sending Money Abroad',
+    fiat: 'International wire transfers take 3–5 business days, cost £15–40 per transaction, require both parties to have bank accounts, and may be blocked by compliance checks or sanctions.',
+    btc: 'Send any amount, to anyone, anywhere on Earth, in ~10 minutes, for a small fee. No ID required. No bank account needed. No business hours. Works on Christmas Day.'
+  }
+};
+
+function showScenario(key) {
+  const s = SCENARIOS[key];
+  document.querySelectorAll('.scenario-btn').forEach(b => b.classList.remove('active'));
+  event.target.classList.add('active');
+
+  const result = document.getElementById('scenario-result');
+  result.innerHTML = `
+    <div class="scenario-side fiat-side">
+      <h4>🏦 Fiat Money</h4>
+      <p>${s.fiat}</p>
+    </div>
+    <div class="scenario-side btc-side">
+      <h4>₿ Bitcoin</h4>
+      <p>${s.btc}</p>
+    </div>`;
+}
+
+// ══════════════════════════════════════════════════════════════
+//  REVEAL / COMPLETION
+// ══════════════════════════════════════════════════════════════
+function showReveal(id) {
+  document.getElementById(id).classList.add('visible');
+}
+
+function showCompletion() {
+  document.getElementById('main').style.display = 'none';
+  const screen = document.getElementById('completion-screen');
+  screen.classList.add('visible');
+  document.getElementById('cert-date').textContent = new Date().toLocaleDateString('en-GB', {day:'numeric',month:'long',year:'numeric'});
+  
+  // Celebrate
+  launchConfetti();
+}
+
+function launchConfetti() {
+  const colors = ['#F7931A','#FFD166','#06D6A0','#6EC6FF','#fff'];
+  for (let i = 0; i < 60; i++) {
+    setTimeout(() => {
+      const el = document.createElement('div');
+      el.style.cssText = `
+        position:fixed;
+        left:${Math.random()*100}vw;
+        top:-20px;
+        width:${6+Math.random()*8}px;
+        height:${6+Math.random()*8}px;
+        background:${colors[Math.floor(Math.random()*colors.length)]};
+        border-radius:${Math.random()>0.5?'50%':'2px'};
+        pointer-events:none;
+        z-index:9999;
+        animation:fall ${2+Math.random()*2}s linear forwards;
+      `;
+      document.body.appendChild(el);
+      setTimeout(() => el.remove(), 4000);
+    }, i * 60);
+  }
+}
+
+function restartCourse() {
+  document.getElementById('completion-screen').classList.remove('visible');
+  document.getElementById('completion-screen').style.display = 'none';
+  document.getElementById('completion-screen').style.display = '';
+  document.getElementById('main').style.display = 'block';
+  goToStage(1);
+  // Reset state
+  balances = { alice: 1000, bob: 500, carol: 750 };
+  aliceFrozen = false;
+  updateBalanceDisplay();
+  resetTickets();
+  resetConsensus();
+  buildChain();
+  startMining();
+  animateSupply();
+}
+
+// ══════════════════════════════════════════════════════════════
+//  CSS ANIMATIONS (injected)
+// ══════════════════════════════════════════════════════════════
+const style = document.createElement('style');
+style.textContent = `
+  @keyframes fall {
+    to { transform: translateY(105vh) rotate(${Math.random()*720}deg); opacity:0; }
+  }
+`;
+document.head.appendChild(style);
+
+</script>
+</body>
+</html>
