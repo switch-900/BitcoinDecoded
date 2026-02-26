@@ -540,7 +540,7 @@
   /* ── COMPLETION SCREEN ── */
   #completion-screen {
     display: none; min-height: calc(100vh - 60px);
-    display: flex; flex-direction: column;
+    flex-direction: column;
     align-items: center; justify-content: center;
     text-align: center; padding: 40px 24px;
   }
@@ -1376,6 +1376,112 @@
     </div>
 
     <div class="card">
+      <div class="card-title">🪣 Fiat vs Bitcoin — The Supply Visualised</div>
+      <p style="font-size:0.85rem; color:var(--text-dim); margin-bottom:20px;">
+        Watch what happens to money supply over time. One has no limit. The other is mathematically fixed — forever.
+      </p>
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:24px; align-items:end; justify-items:center;">
+
+        <!-- FIAT BUCKET -->
+        <div style="text-align:center; width:100%;">
+          <div style="font-size:0.75rem; text-transform:uppercase; letter-spacing:2px; color:var(--text-dim); margin-bottom:12px;">🏦 Fiat Money</div>
+          <div style="position:relative; display:inline-block; width:140px; height:200px;">
+            <!-- Cash notes overflow area above bucket -->
+            <div id="overflow-area" style="position:absolute; top:0; left:-10px; right:-10px; height:70px; pointer-events:none; overflow:hidden;"></div>
+            <svg id="fiat-svg" width="140" height="200" viewBox="0 0 140 200" style="position:absolute;top:0;left:0;">
+              <!-- Overflow puddle on ground -->
+              <ellipse id="fiat-puddle" cx="70" cy="196" rx="0" ry="0" fill="rgba(239,68,68,0.3)" />
+              <!-- Spill trickle left -->
+              <rect id="spill-l" x="12" y="80" width="0" height="0" rx="2" fill="#ef4444" opacity="0.7"/>
+              <!-- Spill trickle right -->
+              <rect id="spill-r" x="128" y="80" width="0" height="0" rx="2" fill="#ef4444" opacity="0.7"/>
+              <!-- Bucket body trapezoid -->
+              <path d="M18 80 L28 180 L112 180 L122 80 Z" fill="#12121a" stroke="#3a3a5c" stroke-width="2"/>
+              <!-- Bucket fill (clip) -->
+              <clipPath id="bucketClip"><path d="M18 80 L28 180 L112 180 L122 80 Z"/></clipPath>
+              <rect id="fiat-fill" x="14" y="180" width="112" height="0" fill="url(#fiatGrad)" clip-path="url(#bucketClip)"/>
+              <!-- NO LIMIT text inside bucket -->
+              <text x="70" y="135" text-anchor="middle" fill="rgba(239,68,68,0.35)" font-size="10" font-weight="800" letter-spacing="1" font-family="monospace">∞ NO LIMIT</text>
+              <!-- Overflow flash highlight at rim -->
+              <rect id="overflow-flash" x="17" y="78" width="106" height="5" rx="2" fill="var(--red)" opacity="0"/>
+              <!-- Bucket top rim -->
+              <rect x="12" y="74" width="116" height="10" rx="5" fill="#1e1e32" stroke="#4a4a7a" stroke-width="1.5"/>
+              <!-- Bucket handle -->
+              <path d="M32 74 Q70 50 108 74" fill="none" stroke="#3a3a5c" stroke-width="3" stroke-linecap="round"/>
+              <!-- Bucket bottom rim -->
+              <rect x="22" y="176" width="96" height="10" rx="5" fill="#1e1e32" stroke="#3a3a5c" stroke-width="1.5"/>
+              <defs>
+                <linearGradient id="fiatGrad" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stop-color="#ef4444"/>
+                  <stop offset="60%" stop-color="#b91c1c"/>
+                  <stop offset="100%" stop-color="#7f1d1d"/>
+                </linearGradient>
+              </defs>
+            </svg>
+          </div>
+          <div style="margin-top:8px; font-size:0.85rem; color:var(--red); font-weight:800;" id="fiat-label">No limit — ever</div>
+          <div style="font-size:0.7rem; color:var(--text-faint); margin-top:3px;">Controlled by governments</div>
+        </div>
+
+        <!-- BITCOIN VAULT -->
+        <div style="text-align:center; width:100%;">
+          <div style="font-size:0.75rem; text-transform:uppercase; letter-spacing:2px; color:var(--text-dim); margin-bottom:12px;">₿ Bitcoin</div>
+          <div style="position:relative; display:inline-block; width:140px; height:200px;">
+            <svg id="btc-svg" width="140" height="200" viewBox="0 0 140 200" style="position:absolute;top:0;left:0;">
+              <!-- Glow behind vault when full -->
+              <ellipse id="btc-glow" cx="70" cy="130" rx="0" ry="0" fill="rgba(247,147,26,0.12)"/>
+              <!-- Vault body (straight sides) -->
+              <path d="M18 80 L18 180 L122 180 L122 80 Z" fill="#12121a" stroke="#2a2a3d" stroke-width="2"/>
+              <!-- BTC fill -->
+              <clipPath id="vaultClip"><path d="M18 80 L18 180 L122 180 L122 80 Z"/></clipPath>
+              <rect id="btc-fill-rect" x="18" y="180" width="104" height="0" fill="url(#btcGrad)" clip-path="url(#vaultClip)"/>
+              <!-- Shimmer -->
+              <rect id="btc-shimmer" x="18" y="180" width="104" height="0" fill="url(#shimmerGrad)" clip-path="url(#vaultClip)" opacity="0.4"/>
+              <!-- ₿ watermark -->
+              <text x="70" y="150" text-anchor="middle" fill="rgba(247,147,26,0.12)" font-size="50" font-weight="900">₿</text>
+              <!-- Hard cap dashed line -->
+              <line x1="6" y1="80" x2="134" y2="80" stroke="var(--orange)" stroke-width="2" stroke-dasharray="5,4"/>
+              <!-- Cap label above -->
+              <text x="70" y="73" text-anchor="middle" fill="var(--orange)" font-size="8.5" font-weight="800" font-family="monospace">— 21,000,000 HARD CAP —</text>
+              <!-- LOCKED badge when full -->
+              <rect id="lock-badge" x="44" y="55" width="52" height="16" rx="8" fill="var(--orange)" opacity="0"/>
+              <text id="lock-text" x="70" y="67" text-anchor="middle" fill="#000" font-size="9" font-weight="900" font-family="monospace" opacity="0">🔒 FULL</text>
+              <!-- Top rim -->
+              <rect x="12" y="74" width="116" height="10" rx="5" fill="#1e1e32" stroke="var(--orange)" stroke-width="1.5"/>
+              <!-- Bottom rim -->
+              <rect x="12" y="176" width="116" height="10" rx="5" fill="#1e1e32" stroke="#3a3a5c" stroke-width="1.5"/>
+              <!-- Bolt decorations on vault -->
+              <circle cx="26" cy="84" r="3" fill="#2a2a4a" stroke="var(--orange)" stroke-width="1"/>
+              <circle cx="114" cy="84" r="3" fill="#2a2a4a" stroke="var(--orange)" stroke-width="1"/>
+              <circle cx="26" cy="176" r="3" fill="#2a2a4a" stroke="#3a3a5c" stroke-width="1"/>
+              <circle cx="114" cy="176" r="3" fill="#2a2a4a" stroke="#3a3a5c" stroke-width="1"/>
+              <defs>
+                <linearGradient id="btcGrad" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stop-color="#F7931A"/>
+                  <stop offset="60%" stop-color="#c47015"/>
+                  <stop offset="100%" stop-color="#7a4800"/>
+                </linearGradient>
+                <linearGradient id="shimmerGrad" x1="0" y1="0" x2="1" y2="0">
+                  <stop offset="0%" stop-color="transparent"/>
+                  <stop offset="50%" stop-color="rgba(255,255,255,0.2)"/>
+                  <stop offset="100%" stop-color="transparent"/>
+                </linearGradient>
+              </defs>
+            </svg>
+          </div>
+          <div style="margin-top:8px; font-size:0.85rem; color:var(--orange); font-weight:800;" id="btc-supply-label">21,000,000 — always</div>
+          <div style="font-size:0.7rem; color:var(--text-faint); margin-top:3px;">Controlled by mathematics</div>
+        </div>
+
+      </div>
+
+      <div style="margin-top:22px; display:flex; gap:10px; flex-wrap:wrap; justify-content:center;">
+        <button class="btn btn-primary btn-sm" onclick="startBucketAnim()">▶ Start Animation</button>
+        <button class="btn btn-secondary btn-sm" onclick="resetBucketAnim()">↺ Reset</button>
+      </div>
+    </div>
+
+    <div class="card">
       <div class="card-title">📊 Bitcoin Supply Counter</div>
       <p style="font-size:0.85rem; color:var(--text-dim); margin-bottom:16px;">
         Over 19.8 million Bitcoin have already been mined. Less than 1.2 million remain.
@@ -2141,6 +2247,176 @@ function loseKey() {
 }
 
 // ══════════════════════════════════════════════════════════════
+//  STAGE 8 — BUCKET ANIMATION
+// ══════════════════════════════════════════════════════════════
+let bucketAnimFrame = null;
+let bucketState = { fiatLevel: 0, btcLevel: 0, overflowing: false, btcFull: false };
+let cashNoteInterval = null;
+
+function startBucketAnim() {
+  resetBucketAnim();
+  const BUCKET_H = 100; // px of fill (80px bucket interior)
+  const BTC_MAX_H = 100;
+  let fiatH = 0, btcH = 0;
+  let overflowTriggered = false;
+  let btcFullTriggered = false;
+  let noteCount = 0;
+
+  function step() {
+    // Fiat fills faster and overflows
+    fiatH += 0.6;
+    // BTC fills to exact cap then stops
+    if (btcH < BTC_MAX_H) btcH += 0.45;
+    else btcH = BTC_MAX_H;
+
+    // Update fiat bucket fill (SVG y from bottom: rect y = 180 - height, height = h)
+    const fiatFill = document.getElementById('fiat-fill');
+    const actualFiatH = Math.min(fiatH, BUCKET_H);
+    if (fiatFill) {
+      fiatFill.setAttribute('y', 180 - actualFiatH);
+      fiatFill.setAttribute('height', actualFiatH);
+    }
+
+    // Overflow effects when fiat exceeds bucket
+    if (fiatH > BUCKET_H && !overflowTriggered) {
+      overflowTriggered = true;
+      triggerOverflow();
+    }
+    if (fiatH > BUCKET_H) {
+      updateOverflowGrowth(fiatH - BUCKET_H);
+    }
+
+    // BTC fill
+    const btcFill = document.getElementById('btc-fill-rect');
+    const btcShimmer = document.getElementById('btc-shimmer');
+    if (btcFill) {
+      btcFill.setAttribute('y', 180 - btcH);
+      btcFill.setAttribute('height', btcH);
+    }
+    if (btcShimmer) {
+      btcShimmer.setAttribute('y', 180 - btcH);
+      btcShimmer.setAttribute('height', btcH);
+    }
+
+    // BTC full — show lock badge + glow
+    if (btcH >= BTC_MAX_H && !btcFullTriggered) {
+      btcFullTriggered = true;
+      triggerBtcFull();
+    }
+
+    // Labels
+    const pct = Math.min(Math.round((btcH / BTC_MAX_H) * 100), 100);
+    document.getElementById('btc-supply-label').textContent = `${pct}% of 21M mined`;
+    if (fiatH > BUCKET_H) {
+      document.getElementById('fiat-label').textContent = `🚨 OVERFLOWING — no limit`;
+    } else {
+      const fpct = Math.round((fiatH / BUCKET_H) * 100);
+      document.getElementById('fiat-label').textContent = `Printing... ${fpct}% and rising`;
+    }
+
+    if (fiatH < 280) {
+      bucketAnimFrame = requestAnimationFrame(step);
+    } else {
+      document.getElementById('fiat-label').textContent = '🚨 Unlimited — keeps printing forever';
+    }
+  }
+
+  bucketAnimFrame = requestAnimationFrame(step);
+}
+
+function triggerOverflow() {
+  // Flash rim
+  const flash = document.getElementById('overflow-flash');
+  if (flash) { flash.setAttribute('opacity', '0.9'); setTimeout(() => flash.setAttribute('opacity','0'), 400); }
+
+  // Start spawning cash notes flying out
+  cashNoteInterval = setInterval(spawnCashNote, 180);
+}
+
+function updateOverflowGrowth(excess) {
+  // Grow puddle
+  const puddle = document.getElementById('fiat-puddle');
+  if (puddle) {
+    const r = Math.min(excess * 0.4, 55);
+    puddle.setAttribute('rx', r);
+    puddle.setAttribute('ry', r * 0.35);
+  }
+  // Spill trickles down sides
+  const spillL = document.getElementById('spill-l');
+  const spillR = document.getElementById('spill-r');
+  const trickleH = Math.min(excess * 1.2, 95);
+  if (spillL) { spillL.setAttribute('y', 80); spillL.setAttribute('width', 5); spillL.setAttribute('height', trickleH); }
+  if (spillR) { spillR.setAttribute('x', 128); spillR.setAttribute('y', 80); spillR.setAttribute('width', 5); spillR.setAttribute('height', trickleH); }
+}
+
+function spawnCashNote() {
+  const area = document.getElementById('overflow-area');
+  if (!area) return;
+  const notes = ['💵','💴','💶','💷'];
+  const el = document.createElement('div');
+  el.textContent = notes[Math.floor(Math.random() * notes.length)];
+  const startX = 15 + Math.random() * 90;
+  const nx = ((Math.random() - 0.5) * 70).toFixed(1) + 'px';
+  const nr = ((Math.random() - 0.5) * 80).toFixed(1) + 'deg';
+  el.style.cssText = `
+    position:absolute;
+    left:${startX}px;
+    bottom:0px;
+    font-size:${14 + Math.random()*10}px;
+    --nx:${nx};
+    --nr:${nr};
+    animation: notefly ${0.65 + Math.random()*0.55}s ease-out forwards;
+    pointer-events:none;
+  `;
+  area.appendChild(el);
+  setTimeout(() => el.remove(), 1400);
+}
+
+function triggerBtcFull() {
+  // Show locked badge
+  const badge = document.getElementById('lock-badge');
+  const text = document.getElementById('lock-text');
+  const glow = document.getElementById('btc-glow');
+  if (badge) badge.setAttribute('opacity', '1');
+  if (text) text.setAttribute('opacity', '1');
+  if (glow) { glow.setAttribute('rx','70'); glow.setAttribute('ry','80'); }
+  document.getElementById('btc-supply-label').textContent = '🔒 21M CAP REACHED — DONE';
+  document.getElementById('btc-supply-label').style.color = 'var(--gold)';
+}
+
+function resetBucketAnim() {
+  if (bucketAnimFrame) cancelAnimationFrame(bucketAnimFrame);
+  if (cashNoteInterval) clearInterval(cashNoteInterval);
+
+  ['fiat-fill','btc-fill-rect','btc-shimmer'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) { el.setAttribute('y','180'); el.setAttribute('height','0'); }
+  });
+  ['fiat-puddle'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) { el.setAttribute('rx','0'); el.setAttribute('ry','0'); }
+  });
+  ['spill-l','spill-r'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) { el.setAttribute('height','0'); el.setAttribute('width','0'); }
+  });
+  const flash = document.getElementById('overflow-flash');
+  if (flash) flash.setAttribute('opacity','0');
+  const badge = document.getElementById('lock-badge');
+  if (badge) badge.setAttribute('opacity','0');
+  const text = document.getElementById('lock-text');
+  if (text) text.setAttribute('opacity','0');
+  const glow = document.getElementById('btc-glow');
+  if (glow) { glow.setAttribute('rx','0'); glow.setAttribute('ry','0'); }
+  const area = document.getElementById('overflow-area');
+  if (area) area.innerHTML = '';
+
+  document.getElementById('fiat-label').textContent = 'No limit — ever';
+  document.getElementById('btc-supply-label').textContent = '21,000,000 — always';
+  document.getElementById('btc-supply-label').style.color = 'var(--orange)';
+}
+
+// ══════════════════════════════════════════════════════════════
 //  STAGE 8 — SCARCITY
 // ══════════════════════════════════════════════════════════════
 function animateSupply() {
@@ -2289,7 +2565,11 @@ function restartCourse() {
 const style = document.createElement('style');
 style.textContent = `
   @keyframes fall {
-    to { transform: translateY(105vh) rotate(${Math.random()*720}deg); opacity:0; }
+    to { transform: translateY(105vh) rotate(360deg); opacity:0; }
+  }
+  @keyframes notefly {
+    0%   { transform: translate(0, 0) rotate(0deg); opacity: 1; }
+    100% { transform: translate(var(--nx, 0px), -75px) rotate(var(--nr, 20deg)); opacity: 0; }
   }
 `;
 document.head.appendChild(style);
